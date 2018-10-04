@@ -369,6 +369,12 @@ public:
     // return false if data not available
     bool getDataEKFGSF(int8_t instance, float &yaw_composite, float &yaw_composite_variance, float yaw[N_MODELS_EKFGSF], float innov_VN[N_MODELS_EKFGSF], float innov_VE[N_MODELS_EKFGSF], float weight[N_MODELS_EKFGSF]) const;
 
+    /* Write velocity data from an external navigation system
+     * vel : velocity in NED (m)
+     * timeStamp_ms : system time the measurement was taken, not the time it was received (mSec)
+    */
+    void writeVisionSpeed(const Vector3f &vel, uint32_t timeStamp_ms);
+
 private:
     uint8_t num_cores; // number of allocated cores
     uint8_t primary;   // current primary core
