@@ -227,25 +227,26 @@ void AC_Avoid::adjust_roll_pitch(float &roll, float &pitch, float veh_angle_max)
     float pitch_negative = 0.0f;   // minimum negative pitch value
 
     // get maximum positive and negative roll and pitch percentages from proximity sensor
-    get_proximity_roll_pitch_pct(roll_positive, roll_negative, pitch_positive, pitch_negative);
+    //get_proximity_roll_pitch_pct(roll_positive, roll_negative, pitch_positive, pitch_negative);
+    get_fence_roll_pitch_pct(roll_positive, roll_negative, pitch_positive, pitch_negative);
 
     // add maximum positive and negative percentages together for roll and pitch, convert to centi-degrees
     Vector2f rp_out((roll_positive + roll_negative) * 4500.0f, (pitch_positive + pitch_negative) * 4500.0f);
 
     // apply avoidance angular limits
     // the object avoidance lean angle is never more than 75% of the total angle-limit to allow the pilot to override
-    const float angle_limit = constrain_float(_angle_max, 0.0f, veh_angle_max * AC_AVOID_ANGLE_MAX_PERCENT);
+    /*const float angle_limit = constrain_float(_angle_max, 0.0f, veh_angle_max * AC_AVOID_ANGLE_MAX_PERCENT);
     float vec_len = rp_out.length();
     if (vec_len > angle_limit) {
         rp_out *= (angle_limit / vec_len);
-    }
+    }*/
 
     // add passed in roll, pitch angles
     rp_out.x += roll;
     rp_out.y += pitch;
 
     // apply total angular limits
-    vec_len = rp_out.length();
+    float vec_len = rp_out.length();
     if (vec_len > veh_angle_max) {
         rp_out *= (veh_angle_max / vec_len);
     }
@@ -851,6 +852,49 @@ float AC_Avoid::distance_to_lean_pct(float dist_m)
     }
     // inverted but linear response
     return 1.0f - (dist_m / _dist_max);
+}
+
+void AC_Avoid::get_fence_roll_pitch_pct(float &roll_positive, float &roll_negative, float &pitch_positive, float &pitch_negative)
+{    
+    AC_Fence *fence = AP::fence();
+    if (fence == nullptr) {
+        return;
+    }
+
+    // exit if circular fence is not enabled
+    if ((fence->get_enabled_fences() & AC_FENCE_TYPE_CIRCLE) == 0) {
+        return;
+    }
+
+    // exit if the circular fence has already been breached
+    if ((fence->get_breaches() & AC_FENCE_TYPE_CIRCLE) != 0) {
+        return;
+    }
+    const float fence_radius = fence->get_radius();
+    const float margin = fence->get_margin();
+
+    const AP_AHRS &_ahrs = AP::ahrs();
+    Vector2f pos; 
+    if (_ahrs.get_relative_position_NE_origin(pos)) {
+        float dist = fence_radius - pos.length();
+        if (dist < margin) {
+            const float lean_pct = distance_to_lean_pct(dist);
+            const float angle_rad = pos.angle() - _ahrs.yaw;
+            const float roll_pct = -sinf(angle_rad) * lean_pct;
+            const float pitch_pct = cosf(angle_rad) * lean_pct;
+            // update roll, pitch maximums
+            if (roll_pct > 0.0f) {
+                roll_positive = MAX(roll_positive, roll_pct);
+            } else if (roll_pct < 0.0f) {
+                roll_negative = MIN(roll_negative, roll_pct);
+            }
+            if (pitch_pct > 0.0f) {
+                pitch_positive = MAX(pitch_positive, pitch_pct);
+            } else if (pitch_pct < 0.0f) {
+                pitch_negative = MIN(pitch_negative, pitch_pct);
+            }
+        }
+    }
 }
 
 // returns the maximum positive and negative roll and pitch percentages (in -1 ~ +1 range) based on the proximity sensor
