@@ -897,10 +897,33 @@ bool AC_Avoid::get_fence_roll_pitch_pct(float &roll_positive, float &roll_negati
         }
     }
     
-    if ((enabled_fences & AC_FENCE_TYPE_POLYGON) && ((breaches & AC_FENCE_TYPE_POLYGON) == 0)) {
-        float dist_max_squared = _dist_max * _dist_max;
+#if 0    
+            const uint8_t num_inclusion_polygons = fence->polyfence().get_inclusion_polygon_count();
+            for (uint8_t i = 0; i < num_inclusion_polygons; i++) {
+                uint16_t num_points;
+                const Vector2f* boundary = fence->polyfence().get_inclusion_polygon(i, num_points);
+                hal.console->printf("num_points %d\n", num_points);
+                if (boundary == nullptr || num_points < 3) {
+                    continue;
+                }
+                for (uint16_t k=0; k<num_points; k++) {
+                    uint16_t j = k+1;
+                    if (j >= num_points) {
+                        j = 0;
+                    }
+                    // end points of current edge
+                    Vector2f start = boundary[j];
+                    Vector2f end = boundary[k];
+                    hal.console->printf("%f %f -> %f %f\n", start.x, start.y, end.x, end.y);
+                }
+            }
+#endif
+#if 1
+    if (enabled_fences & AC_FENCE_TYPE_POLYGON && ((breaches & AC_FENCE_TYPE_POLYGON) == 0)) {
+        float dist_max_squared = _dist_max * _dist_max * 10000.0f;
         Vector2f pos; 
         if (_ahrs.get_relative_position_NE_origin(pos)) {
+            pos = pos * 100.0f;
             const uint8_t num_inclusion_polygons = fence->polyfence().get_inclusion_polygon_count();
             for (uint8_t i = 0; i < num_inclusion_polygons; i++) {
                 uint16_t num_points;
@@ -913,14 +936,12 @@ bool AC_Avoid::get_fence_roll_pitch_pct(float &roll_positive, float &roll_negati
                     if (j >= num_points) {
                         j = 0;
                     }
-                    // end points of current edge
                     Vector2f start = boundary[j];
                     Vector2f end = boundary[k];
-                    Vector2f cp = Vector2f::closest_point(pos, start, end);
-                    Vector2f pos_cp = cp - pos;
+                    Vector2f pos_cp = Vector2f::closest_point(pos, start, end) - pos;
                     float dist_squared = pos_cp.length_squared();
                     if (dist_squared < dist_max_squared) {
-                        const float lean_pct = distance_to_lean_pct(sqrtf(dist_squared));
+                        const float lean_pct = distance_to_lean_pct(sqrtf(dist_squared) * 0.01f);
                         const float angle_rad = pos_cp.angle() - _ahrs.yaw;
                         const float roll_pct = -sinf(angle_rad) * lean_pct;
                         const float pitch_pct = cosf(angle_rad) * lean_pct;
@@ -941,7 +962,7 @@ bool AC_Avoid::get_fence_roll_pitch_pct(float &roll_positive, float &roll_negati
             }
         }
     }
-
+#endif
     return adjusted;
 }
 
