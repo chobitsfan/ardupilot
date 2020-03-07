@@ -342,12 +342,15 @@ out:
 
 bool AC_PolyFence_loader::read_scaled_latlon_from_storage(const Location &origin, uint16_t &read_offset, Vector2f &pos_cm)
 {
-    Location tmp_loc;
-    tmp_loc.lat = fence_storage.read_uint32(read_offset);
+    uint32_t lat, lng;
+    lat = fence_storage.read_uint32(read_offset);
     read_offset += 4;
-    tmp_loc.lng = fence_storage.read_uint32(read_offset);
+    lng = fence_storage.read_uint32(read_offset);
     read_offset += 4;
-    pos_cm = origin.get_distance_NE(tmp_loc) * 100.0f;
+    pos_cm.x = lat; //already cm
+    pos_cm.y = lng; 
+    pos_cm.x -= 1000; //substract offset
+    pos_cm.y -= 1000;
     return true;
 }
 
@@ -612,11 +615,7 @@ bool AC_PolyFence_loader::load_from_eeprom()
         return _load_time_ms != 0;
     }
 
-    struct Location ekf_origin{};
-    if (!AP::ahrs().get_origin(ekf_origin)) {
-//        Debug("fence load requires origin");
-        return false;
-    }
+    struct Location ekf_origin{12345678,23456789,0,Location::AltFrame::ABSOLUTE};
 
     _load_attempted = true;
 
@@ -874,8 +873,6 @@ bool AC_PolyFence_loader::validate_fence(const AC_PolyFenceItem *new_items, uint
     bool seen_return_point = false;
 
     for (uint16_t i=0; i<count; i++) {
-        bool validate_latlon = false;
-
         switch (new_items[i].type) {
         case AC_PolyFenceType::END_OF_STORAGE:
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
@@ -903,7 +900,6 @@ bool AC_PolyFence_loader::validate_fence(const AC_PolyFenceItem *new_items, uint
                 }
             }
             expected_type_count--;
-            validate_latlon = true;
             break;
 
         case AC_PolyFenceType::CIRCLE_INCLUSION:
@@ -916,7 +912,6 @@ bool AC_PolyFence_loader::validate_fence(const AC_PolyFenceItem *new_items, uint
                 gcs().send_text(MAV_SEVERITY_WARNING, "Non-positive circle radius");
                 return false;
             }
-            validate_latlon = true;
             break;
 
         case AC_PolyFenceType::RETURN_POINT:
@@ -931,17 +926,9 @@ bool AC_PolyFence_loader::validate_fence(const AC_PolyFenceItem *new_items, uint
                 return false;
             }
             seen_return_point = true;
-            validate_latlon = true;
             // TODO: ensure return point is within all fences and
             // outside all exclusion zones
             break;
-        }
-
-        if (validate_latlon) {
-            if (!check_latlng(new_items[i].loc[0], new_items[i].loc[1])) {
-                gcs().send_text(MAV_SEVERITY_WARNING, "Bad lat or lon");
-                return false;
-            }
         }
     }
 
@@ -1200,8 +1187,8 @@ void AC_PolyFence_loader::handle_msg_fetch_fence_point(GCS_MAVLINK &link, const 
         // return point
         Vector2l ret;
         if (get_return_point(ret)) {
-            ret_packet.lat = ret.x * 1.0e-7f;
-            ret_packet.lng = ret.y * 1.0e-7f;
+            ret_packet.lat = ret.x;
+            ret_packet.lng = ret.y;
         } else {
             link.send_text(MAV_SEVERITY_WARNING, "Failed to get return point");
         }
@@ -1235,8 +1222,8 @@ void AC_PolyFence_loader::handle_msg_fetch_fence_point(GCS_MAVLINK &link, const 
 #endif
                     return;
                 }
-                ret_packet.lat = bob[0] * 1.0e-7f;
-                ret_packet.lng = bob[1] * 1.0e-7f;
+                ret_packet.lat = bob[0];
+                ret_packet.lng = bob[1];
             }
         }
     }
@@ -1387,11 +1374,6 @@ void AC_PolyFence_loader::handle_msg_fence_point(GCS_MAVLINK &link, const mavlin
         return;
     }
 
-    if (!check_latlng(packet.lat, packet.lng)) {
-        link.send_text(MAV_SEVERITY_WARNING, "Invalid fence point, bad lat or lng");
-        return;
-    }
-
     if (!contains_compatible_fence()) {
         // the GCS has started to upload using the old protocol;
         // ensure we can accept it.  We must be able to index the
@@ -1402,8 +1384,8 @@ void AC_PolyFence_loader::handle_msg_fence_point(GCS_MAVLINK &link, const mavlin
     }
 
     const Vector2l point{
-        (int32_t)(packet.lat*1.0e7f),
-        (int32_t)(packet.lng*1.0e7f)
+        (int32_t)(packet.lat), // already send in interger cm
+        (int32_t)(packet.lng)
     };
 
     if (packet.idx == 0) {
