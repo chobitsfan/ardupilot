@@ -2234,7 +2234,7 @@ void GCS_MAVLINK::send_local_position() const
     const AP_AHRS &ahrs = AP::ahrs();
 
     Vector3f local_position, velocity;
-    if (!ahrs.get_relative_position_NED_home(local_position) ||
+    if (!ahrs.get_relative_position_NED_origin(local_position) ||
         !ahrs.get_velocity_NED(velocity)) {
         // we don't know the position and velocity
         return;
@@ -4235,15 +4235,10 @@ void GCS_MAVLINK::send_attitude() const
 {
     const AP_AHRS &ahrs = AP::ahrs();
     const Vector3f omega = ahrs.get_gyro();
-    mavlink_msg_attitude_send(
-        chan,
-        AP_HAL::millis(),
-        ahrs.roll,
-        ahrs.pitch,
-        ahrs.yaw,
-        omega.x,
-        omega.y,
-        omega.z);
+    Quaternion quat;
+    float repr_offset_q[4];
+    ahrs.get_quat_body_to_ned(quat);
+    mavlink_msg_attitude_quaternion_send(chan, AP_HAL::millis(), quat.q1, quat.q2, quat.q3, quat.q4, omega.x, omega.y, omega.z, repr_offset_q);
 }
 
 int32_t GCS_MAVLINK::global_position_int_alt() const {
