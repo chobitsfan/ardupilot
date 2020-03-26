@@ -36,6 +36,12 @@ extern const AP_HAL::HAL& hal;
 #pragma GCC diagnostic pop
 #endif
 
+#define UWB_BUF_SZ 1024
+static uint8_t uwb_buf[UWB_BUF_SZ];
+static uint8_t* uwb_buf_ptr = uwb_buf;
+int uwb_buf_remains = UWB_BUF_SZ;
+void flush_uwb_comm();
+
 AP_HAL::UARTDriver	*mavlink_comm_port[MAVLINK_COMM_NUM_BUFFERS];
 bool gcs_alternative_active[MAVLINK_COMM_NUM_BUFFERS];
 
@@ -98,7 +104,24 @@ void comm_send_buffer(mavlink_channel_t chan, const uint8_t *buf, uint8_t len)
         // an alternative protocol is active
         return;
     }
-    const size_t written = mavlink_comm_port[chan]->write(buf, len);
+    //const size_t written = mavlink_comm_port[chan]->write(buf, len);
+    size_t written = len;
+    if (chan == 1) {
+        if (uwb_buf_remains < len) {
+            //hal.console->printf("uwb flush %d\n", UWB_BUF_SZ - uwb_buf_remains);
+            written = mavlink_comm_port[chan]->write(uwb_buf, UWB_BUF_SZ - uwb_buf_remains);
+            memcpy(uwb_buf, buf, len);
+            uwb_buf_remains = UWB_BUF_SZ - len;
+            uwb_buf_ptr = uwb_buf + len;
+        } else {
+            //hal.console->printf("uwb queue %d\n", len);
+            memcpy(uwb_buf_ptr, buf, len);
+            uwb_buf_remains -= len;
+            uwb_buf_ptr += len;
+        }
+    } else {
+        written = mavlink_comm_port[chan]->write(buf, len);
+    }
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     if (written < len) {
         AP_HAL::panic("Short write on UART: %lu < %u", (unsigned long)written, len);
@@ -106,6 +129,16 @@ void comm_send_buffer(mavlink_channel_t chan, const uint8_t *buf, uint8_t len)
 #else
     (void)written;
 #endif
+}
+
+void flush_uwb_comm()
+{
+    if (uwb_buf_remains < UWB_BUF_SZ) {
+        //hal.console->printf("uwb flush %d\n", UWB_BUF_SZ - uwb_buf_remains);
+        mavlink_comm_port[1]->write(uwb_buf, UWB_BUF_SZ - uwb_buf_remains);
+        uwb_buf_remains = UWB_BUF_SZ;
+        uwb_buf_ptr = uwb_buf;
+    }
 }
 
 /*

@@ -69,6 +69,8 @@
 #include <AP_BattMonitor/AP_BattMonitor.h>
 #include <AP_GPS/AP_GPS.h>
 
+void flush_uwb_comm();
+
 extern const AP_HAL::HAL& hal;
 
 uint32_t GCS_MAVLINK::last_radio_status_remrssi_ms;
@@ -1118,6 +1120,10 @@ void GCS_MAVLINK::update_send()
         }
         break;
     }
+    
+    uint32_t uwb_now = AP_HAL::millis();
+    if (chan==1 && uwb_now-prv_uwb_ts>5) {flush_uwb_comm();prv_uwb_ts=uwb_now;}
+
 #if GCS_DEBUG_SEND_MESSAGE_TIMINGS
     const uint32_t stop = AP_HAL::micros();
     const uint32_t delta = stop - retry_deferred_body_start;

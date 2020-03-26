@@ -298,6 +298,7 @@ public:
     MAV_RESULT set_message_interval(uint32_t msg_id, int32_t interval_us);
 
 protected:
+    uint32_t prv_uwb_ts = 0;
 
     virtual bool in_hil_mode() const { return false; }
 
