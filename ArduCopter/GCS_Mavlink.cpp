@@ -413,7 +413,7 @@ static const ap_message STREAM_EXTENDED_STATUS_msgs[] = {
     MSG_POSITION_TARGET_GLOBAL_INT,
 };
 static const ap_message STREAM_POSITION_msgs[] = {
-    MSG_LOCATION,
+    MSG_ATTITUDE,
     MSG_LOCAL_POSITION
 };
 static const ap_message STREAM_RC_CHANNELS_msgs[] = {
