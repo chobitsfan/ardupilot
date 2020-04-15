@@ -22,6 +22,22 @@ extern const AP_HAL::HAL& hal;
 
 #define PROXIMITY_MAV_TIMEOUT_MS    500 // distance messages must arrive within this many milliseconds
 
+uint8_t AP_Proximity_MAV::get_object_count() const
+{
+    return 1;
+}
+
+bool AP_Proximity_MAV::get_object_angle_and_distance(uint8_t object_number, float& angle_deg, float &distance) const
+{
+    if (object_number < 1) {
+        angle_deg = _angle_deg;
+        distance = _dist;
+        return true;
+    } else {
+        return false;
+    } 
+}
+
 // update the state of the sensor
 void AP_Proximity_MAV::update(void)
 {
@@ -52,22 +68,12 @@ void AP_Proximity_MAV::handle_msg(const mavlink_message_t &msg)
         mavlink_msg_distance_sensor_decode(&msg, &packet);
 
         // store distance to appropriate sector based on orientation field
-        if (packet.orientation <= MAV_SENSOR_ROTATION_YAW_315) {
-            uint8_t sector = packet.orientation;
-            _angle[sector] = sector * 45;
-            _distance[sector] = packet.current_distance * 0.01f;
-            _distance_min = packet.min_distance * 0.01f;
-            _distance_max = packet.max_distance * 0.01f;
-            _distance_valid[sector] = (_distance[sector] >= _distance_min) && (_distance[sector] <= _distance_max);
-            _last_update_ms = AP_HAL::millis();
-            update_boundary_for_sector(sector, true);
-        }
+        _angle_deg = packet.orientation * 2;
+        _dist = packet.current_distance * 0.01f;
+        _distance_min = packet.min_distance * 0.01f;
+        _distance_max = packet.max_distance * 0.01f;
+        _last_update_ms = AP_HAL::millis();
 
-        // store upward distance
-        if (packet.orientation == MAV_SENSOR_ROTATION_PITCH_90) {
-            _distance_upward = packet.current_distance * 0.01f;
-            _last_upward_update_ms = AP_HAL::millis();
-        }
         return;
     }
 
