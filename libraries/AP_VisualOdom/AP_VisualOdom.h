@@ -17,8 +17,6 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_Vehicle/AP_Vehicle_Type.h>
 
-#define HAL_VISUALODOM_ENABLED 0
-
 #ifndef HAL_VISUALODOM_ENABLED
 #define HAL_VISUALODOM_ENABLED !HAL_MINIMIZE_FEATURES
 #endif
