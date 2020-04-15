@@ -2927,6 +2927,21 @@ void GCS_MAVLINK::handle_data_packet(const mavlink_message_t &msg)
 #endif
 }
 
+void GCS_MAVLINK::handle_vision_speed_estimate(const mavlink_message_t &msg)
+{
+    mavlink_vision_speed_estimate_t m;
+    mavlink_msg_vision_speed_estimate_decode(&msg, &m);
+    const Vector3f vel = {m.x, m.y, m.z};
+    uint32_t timestamp_ms = correct_offboard_timestamp_usec_to_ms(m.usec, PAYLOAD_SIZE(chan, VISION_SPEED_ESTIMATE));
+    AP::ahrs().writeVisionSpeed(vel, timestamp_ms);
+    AP::logger().Write("VISS", "TimeUS,RemTimeUS,CTimeMS,VX,VY,VZ",
+                       "sssnnn", "FFC000", "QQIfff",
+                       (uint64_t)AP_HAL::micros64(),
+                       (uint64_t)m.usec,
+                       timestamp_ms,
+                       m.x,m.y,m.z);
+}
+
 void GCS_MAVLINK::handle_vision_position_delta(const mavlink_message_t &msg)
 {
 #if HAL_VISUALODOM_ENABLED
@@ -3264,6 +3279,10 @@ void GCS_MAVLINK::handle_common_message(const mavlink_message_t &msg)
 
     case MAVLINK_MSG_ID_ATT_POS_MOCAP:
         handle_att_pos_mocap(msg);
+        break;
+
+    case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE:
+        handle_vision_speed_estimate(msg);
         break;
 
     case MAVLINK_MSG_ID_SYSTEM_TIME:

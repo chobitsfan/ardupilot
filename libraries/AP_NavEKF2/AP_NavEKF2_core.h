@@ -329,6 +329,13 @@ public:
     // return true when external nav data is also being used as a yaw observation
     bool isExtNavUsedForYaw(void);
 
+    /*
+     * Write velocity data from an external navigation system
+     * vel : velocity in NED (m)
+     * timeStamp_ms : system time the measurement was taken, not the time it was received (mSec)
+    */
+    void writeVisionSpeed(const Vector3f &vel, uint32_t timeStamp_ms);
+
 private:
     // Reference to the global EKF frontend for parameters
     NavEKF2 *frontend;
@@ -487,6 +494,11 @@ private:
         Vector3f gyro_scale;
         float accel_zbias;
     } inactiveBias[INS_MAX_INSTANCES];
+
+    struct vision_speed_elements {
+        Vector3f vel;               // velocity in NED (m)
+        uint32_t time_ms;           // measurement timestamp (msec)
+    };
 
     // update the navigation filter status
     void  updateFilterStatus(void);
@@ -878,6 +890,7 @@ private:
     uint32_t lastGpsAidBadTime_ms;  // time in msec gps aiding was last detected to be bad
     float posDownAtTakeoff;         // flight vehicle vertical position sampled at transition from on-ground to in-air and used as a reference (m)
     bool useGpsVertVel;             // true if GPS vertical velocity should be used
+    bool useVisVertVel;
     float yawResetAngle;            // Change in yaw angle due to last in-flight yaw reset in radians. A positive value means the yaw angle has increased.
     uint32_t lastYawReset_ms;       // System time at which the last yaw reset occurred. Returned by getLastYawResetAngle
     Vector3f tiltErrVec;            // Vector of most recent attitude error correction from Vel,Pos fusion
@@ -1125,6 +1138,12 @@ private:
     bool extNavUsedForYaw;              // true when the external nav data is also being used as a yaw observation
     bool extNavUsedForPos;              // true when the external nav data is being used as a position reference.
     bool extNavYawResetRequest;         // true when a reset of vehicle yaw using the external nav data is requested
+
+    obs_ring_buffer_t<vision_speed_elements> storedVisionSpeed; // vision speed buffer
+    vision_speed_elements visionSpeedNew;                       // vision speed at the current time horizon
+    vision_speed_elements visionSpeedDelayed;                   // vision speed at the fusion time horizon
+    uint32_t visionSpeedMeasTime_ms;                            // time vision speed measurements were accepted for input to the data buffer (msec)
+    bool visionSpeedToFuse;                                     // true when there is new vision speed to fuse
 
     // flags indicating severe numerical errors in innovation variance calculation for different fusion operations
     struct {
