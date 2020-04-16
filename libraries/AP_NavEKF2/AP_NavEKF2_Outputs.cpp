@@ -606,7 +606,7 @@ void NavEKF2_core::send_status_report(mavlink_channel_t chan) const
 // report the reason for why the backend is refusing to initialise
 const char *NavEKF2_core::prearm_failure_reason(void) const
 {
-    if (gpsGoodToAlign || (prearm_fail_string[0] == 0)) {
+    if (gpsGoodToAlign) {
         // we are not failing
         return nullptr;
     }
