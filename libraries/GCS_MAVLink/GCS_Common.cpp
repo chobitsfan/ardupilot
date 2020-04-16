@@ -1071,7 +1071,7 @@ void GCS_MAVLINK::update_send()
                     try_send_message_stats.max_retry_deferred_body_type = 1;
                 }
 #endif
-                continue;
+                if (chan==1) break; else continue;
             }
         }
 
@@ -1091,7 +1091,7 @@ void GCS_MAVLINK::update_send()
                 try_send_message_stats.max_retry_deferred_body_type = 2;
             }
 #endif
-            continue;
+            if (chan==1) break; else continue;
         }
 
         ap_message next = next_deferred_bucket_message_to_send();
@@ -1114,7 +1114,7 @@ void GCS_MAVLINK::update_send()
                     try_send_message_stats.max_retry_deferred_body_type = 3;
                 }
 #endif
-            continue;
+            if (chan==1) break; else continue;
         }
         break;
     }
