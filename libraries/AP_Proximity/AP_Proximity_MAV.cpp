@@ -20,7 +20,7 @@
 
 extern const AP_HAL::HAL& hal;
 
-#define PROXIMITY_MAV_TIMEOUT_MS    500 // distance messages must arrive within this many milliseconds
+#define PROXIMITY_MAV_TIMEOUT_MS    250 // distance messages must arrive within this many milliseconds
 
 uint8_t AP_Proximity_MAV::get_object_count() const
 {
