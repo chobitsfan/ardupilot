@@ -170,6 +170,19 @@ void AP_VisualOdom::handle_vision_position_estimate(uint64_t remote_time_us, uin
     }
 }
 
+void AP_VisualOdom::handle_vision_speed_estimate(uint64_t remote_time_us, uint32_t time_ms, const Vector3f &vel)
+{
+    // exit immediately if not enabled
+    if (!enabled()) {
+        return;
+    }
+
+    // call backend
+    if (_driver != nullptr) {
+        _driver->handle_vision_speed_estimate(remote_time_us, time_ms, vel);
+    }
+}
+
 // calibrate camera attitude to align with vehicle's AHRS/EKF attitude
 void AP_VisualOdom::align_sensor_to_vehicle()
 {
