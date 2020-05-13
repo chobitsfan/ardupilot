@@ -1710,6 +1710,9 @@ void NavEKF2::writeDefaultAirSpeed(float airspeed)
     if (core) {
         for (uint8_t i=0; i<num_cores; i++) {
             core[i].writeDefaultAirSpeed(airspeed);
+        }
+    }
+}
 
 /* Write velocity data from an external navigation system
  * vel : velocity in NED (m)

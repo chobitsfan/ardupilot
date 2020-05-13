@@ -1472,11 +1472,14 @@ void AP_AHRS_NavEKF::writeDefaultAirSpeed(float airspeed)
 #if HAL_NAVEKF3_AVAILABLE
     EKF3.writeDefaultAirSpeed(airspeed);
 #endif
+}
 
 // Write velocity data from an external navigation system
 void AP_AHRS_NavEKF::writeVisionSpeed(const Vector3f &vel, uint32_t timeStamp_ms)
 {
+#if HAL_NAVEKF2_AVAILABLE
     EKF2.writeVisionSpeed(vel, timeStamp_ms);
+#endif
 }
 
 // inhibit GPS usage
