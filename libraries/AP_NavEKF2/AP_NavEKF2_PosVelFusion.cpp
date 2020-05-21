@@ -48,7 +48,7 @@ void NavEKF2_core::ResetVelocity(void)
             lastVelPassTime_ms = imuSampleTime_ms;
         } else if (imuSampleTime_ms - extNavVelMeasTime_ms < 250) {
             // use external nav data as the 2nd preference
-            // correct for antenna position
+            // correct for external navigation sensor position
             ext_nav_vel_elements extNavVelCorrected = extNavVelDelayed;
             CorrectExtNavVelForSensorOffset(extNavVelCorrected.vel);
             stateStruct.velocity = extNavVelCorrected.vel;
