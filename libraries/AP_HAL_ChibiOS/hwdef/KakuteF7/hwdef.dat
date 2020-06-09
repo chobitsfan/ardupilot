@@ -151,3 +151,7 @@ define STM32_PWM_USE_ADVANCED TRUE
 # we are low on flash on this board
 define HAL_MINIMIZE_FEATURES 1
 define HAL_WITH_DSP 1
+
+define HAL_VISUALODOM_ENABLED 1
+define HAL_NAVEKF2_AVAILABLE 1
+define HAL_NAVEKF3_AVAILABLE 0
