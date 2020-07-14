@@ -339,7 +339,6 @@ void NavEKF2_core::InitialiseVariables()
     extNavUsedForYaw = false;
     extNavUsedForPos = false;
     extNavYawResetRequest = false;
-    extNavPosResetRequest = false;
 
     extNavVelNew = {};
     extNavVelDelayed = {};
