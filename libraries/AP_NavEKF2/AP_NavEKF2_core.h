@@ -682,7 +682,7 @@ private:
     void InitialiseVariablesMag();
 
     // reset the horizontal position states uing the last GPS measurement
-    void ResetPosition(void);
+    void ResetPosition(bool extNavInit = false);
 
     // reset the stateStruct's NE position to the specified position
     void ResetPositionNE(float posN, float posE);
