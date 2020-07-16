@@ -45,7 +45,7 @@ void NavEKF3_core::ResetVelocity(void)
             // clear the timeout flags and counters
             velTimeout = false;
             lastVelPassTime_ms = imuSampleTime_ms;
-        } else if ((imuSampleTime_ms - extNavVelMeasTime_ms < 250 && posResetSource == DEFAULT) || velResetSource == EXTNAV) {
+        } else if ((imuSampleTime_ms - extNavVelMeasTime_ms < 250 && velResetSource == DEFAULT) || velResetSource == EXTNAV) {
             // use external nav data as the 2nd preference
             // already corrected for sensor position
             stateStruct.velocity = extNavVelDelayed.vel;
