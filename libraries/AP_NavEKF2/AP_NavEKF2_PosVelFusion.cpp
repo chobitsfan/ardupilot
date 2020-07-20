@@ -49,11 +49,10 @@ void NavEKF2_core::ResetVelocity(void)
         } else if (imuSampleTime_ms - extNavVelMeasTime_ms < 250) {
             // use external nav data as the 2nd preference
             // correct for external navigation sensor position
-            ext_nav_vel_elements extNavVelCorrected = extNavVelDelayed;
+            ext_nav_vel_elements extNavVelCorrected = extNavVelNew;
             CorrectExtNavVelForSensorOffset(extNavVelCorrected.vel);
             stateStruct.velocity = extNavVelCorrected.vel;
             P[4][4] = P[3][3] = sq(frontend->_gpsHorizVelNoise);
-            P[5][5] = sq(frontend->_gpsVertVelNoise);
             velTimeout = false;
             lastVelPassTime_ms = imuSampleTime_ms;
         } else {
@@ -128,14 +127,18 @@ void NavEKF2_core::ResetPosition(void)
             // clear the timeout flags and counters
             rngBcnTimeout = false;
             lastRngBcnPassTime_ms = imuSampleTime_ms;
-        } else if (imuSampleTime_ms - extNavDataDelayed.time_ms < 250) {
+        } else if (imuSampleTime_ms - extNavMeasTime_ms < 250) {
             // use external nav data as the third preference
-            ext_nav_elements extNavCorrected = extNavDataDelayed;
+            // extNavDataDelay may be too old to pass time check
+            ext_nav_elements extNavCorrected = extNavDataNew;
             CorrectExtNavForSensorOffset(extNavCorrected.pos);
             stateStruct.position.x = extNavCorrected.pos.x;
             stateStruct.position.y = extNavCorrected.pos.y;
             // set the variances from the external nav filter
             P[7][7] = P[6][6] = sq(extNavCorrected.posErr);
+            // clear the timeout flags and counters
+            posTimeout = false;
+            lastPosPassTime_ms = imuSampleTime_ms;
         }
     }
     for (uint8_t i=0; i<imu_buffer_length; i++) {
