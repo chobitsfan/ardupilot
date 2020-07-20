@@ -1023,7 +1023,6 @@ void NavEKF2_core::writeExtNavVelData(const Vector3f &vel, uint32_t timeStamp_ms
     }
 
     extNavVelMeasTime_ms = timeStamp_ms;
-    useExtNavVel = true;
     extNavVelNew.vel = vel;
     timeStamp_ms = timeStamp_ms - delay_ms;
     // Correct for the average intersampling delay due to the filter updaterate

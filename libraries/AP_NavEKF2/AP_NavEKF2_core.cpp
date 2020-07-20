@@ -344,7 +344,6 @@ void NavEKF2_core::InitialiseVariables()
     memset(&extNavVelDelayed, 0, sizeof(extNavVelDelayed));
     extNavVelToFuse = false;
     extNavVelMeasTime_ms = 0;
-    useExtNavVel = false;
 
     // zero data buffers
     storedIMU.reset();
