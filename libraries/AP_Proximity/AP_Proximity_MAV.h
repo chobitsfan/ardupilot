@@ -25,6 +25,7 @@ public:
 
     uint8_t get_object_count() const override;
     bool get_object_angle_and_distance(uint8_t object_number, float& angle_deg, float &distance) const override;
+    bool get_closest_object(float& angle_deg, float &distance) const override;
 
 private:
 
