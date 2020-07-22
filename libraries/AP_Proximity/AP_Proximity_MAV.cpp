@@ -27,6 +27,13 @@ uint8_t AP_Proximity_MAV::get_object_count() const
     return 1;
 }
 
+bool AP_Proximity_MAV::get_closest_object(float& angle_deg, float &distance) const
+{
+    angle_deg = _angle_deg;
+    distance = _dist;
+    return true;
+}
+
 bool AP_Proximity_MAV::get_object_angle_and_distance(uint8_t object_number, float& angle_deg, float &distance) const
 {
     if (object_number < 1) {
