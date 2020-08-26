@@ -38,4 +38,9 @@ private:
 
     float _dist;
     int _angle_deg;
+    AP_Param *atc_rat_pit_p = 0;
+    float orig_pit_p;
+    AP_Param *atc_rat_rll_p = 0;
+    float orig_rll_p;
+    bool shock = false;
 };
