@@ -20,7 +20,7 @@
 
 extern const AP_HAL::HAL& hal;
 
-#define PROXIMITY_MAV_TIMEOUT_MS    500 // distance messages must arrive within this many milliseconds
+#define PROXIMITY_MAV_TIMEOUT_MS    100 // distance messages must arrive within this many milliseconds
 
 uint8_t AP_Proximity_MAV::get_object_count() const
 {
@@ -29,7 +29,7 @@ uint8_t AP_Proximity_MAV::get_object_count() const
 
 bool AP_Proximity_MAV::get_object_angle_and_distance(uint8_t object_number, float& angle_deg, float &distance) const
 {
-    if (object_number < 1) {
+    if (!shock && object_number < 1) {
         angle_deg = _angle_deg;
         distance = _dist;
         return true;
@@ -42,14 +42,14 @@ bool AP_Proximity_MAV::get_object_angle_and_distance(uint8_t object_number, floa
 void AP_Proximity_MAV::update(void)
 {
     // check for timeout and set health status
-    if ((_last_update_ms == 0 || (AP_HAL::millis() - _last_update_ms > PROXIMITY_MAV_TIMEOUT_MS)) &&
+    if (shock && (AP_HAL::millis() - _last_update_ms > 500)) {
+        set_status(AP_Proximity::Status::NoData);
+        shock = false;
+        atc_rat_pit_p->set_float(orig_pit_p, AP_PARAM_FLOAT);
+        atc_rat_rll_p->set_float(orig_rll_p, AP_PARAM_FLOAT);
+    } else if ((_last_update_ms == 0 || (AP_HAL::millis() - _last_update_ms > PROXIMITY_MAV_TIMEOUT_MS)) &&
         (_last_upward_update_ms == 0 || (AP_HAL::millis() - _last_upward_update_ms > PROXIMITY_MAV_TIMEOUT_MS))) {
         set_status(AP_Proximity::Status::NoData);
-        if (shock) {
-            shock = false;
-            atc_rat_pit_p->set_float(orig_pit_p, AP_PARAM_FLOAT);
-            atc_rat_rll_p->set_float(orig_rll_p, AP_PARAM_FLOAT);
-        }
     } else {
         set_status(AP_Proximity::Status::Good);
     }
@@ -72,22 +72,25 @@ void AP_Proximity_MAV::handle_msg(const mavlink_message_t &msg)
         mavlink_distance_sensor_t packet;
         mavlink_msg_distance_sensor_decode(&msg, &packet);
 
-        if (atc_rat_pit_p == 0) {
-            enum ap_var_type var_type;
-            uint16_t parameter_flags = 0;
-            atc_rat_pit_p = AP_Param::find("ATC_RAT_PIT_P", &var_type, &parameter_flags);
-            orig_pit_p = atc_rat_pit_p->cast_to_float(var_type);
-            atc_rat_rll_p = AP_Param::find("ATC_RAT_RLL_P", &var_type, &parameter_flags);
-            orig_rll_p = atc_rat_rll_p->cast_to_float(var_type);
+        if (packet.type == 10) {
+            if (atc_rat_pit_p == 0) {
+                enum ap_var_type var_type;
+                uint16_t parameter_flags = 0;
+                atc_rat_pit_p = AP_Param::find("ATC_RAT_PIT_P", &var_type, &parameter_flags);
+                orig_pit_p = atc_rat_pit_p->cast_to_float(var_type);
+                atc_rat_rll_p = AP_Param::find("ATC_RAT_RLL_P", &var_type, &parameter_flags);
+                orig_rll_p = atc_rat_rll_p->cast_to_float(var_type);
+            }
+            atc_rat_pit_p->set_float(0.5f, AP_PARAM_FLOAT);
+            atc_rat_rll_p->set_float(0.5f, AP_PARAM_FLOAT);
+            shock = true;
+        } else {
+            // store distance to appropriate sector based on orientation field
+            _angle_deg = packet.orientation * 2;
+            _dist = packet.current_distance * 0.01f;
+            _distance_min = packet.min_distance * 0.01f;
+            _distance_max = packet.max_distance * 0.01f;
         }
-        atc_rat_pit_p->set_float(0.5f, AP_PARAM_FLOAT);
-        atc_rat_rll_p->set_float(0.5f, AP_PARAM_FLOAT);
-        shock = true;
-        // store distance to appropriate sector based on orientation field
-        _angle_deg = packet.orientation * 2;
-        _dist = packet.current_distance * 0.01f;
-        _distance_min = packet.min_distance * 0.01f;
-        _distance_max = packet.max_distance * 0.01f;
         _last_update_ms = AP_HAL::millis();
 
         return;
