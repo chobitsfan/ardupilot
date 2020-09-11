@@ -17,6 +17,7 @@
 #include "AP_Beacon_Backend.h"
 #include "AP_Beacon_Pozyx.h"
 #include "AP_Beacon_Marvelmind.h"
+#include "AP_Beacon_Nooploop.h"
 #include "AP_Beacon_SITL.h"
 
 #include <AP_Common/Location.h>
@@ -97,6 +98,8 @@ void AP_Beacon::init(void)
         _driver = new AP_Beacon_Pozyx(*this, serial_manager);
     } else if (_type == AP_BeaconType_Marvelmind) {
         _driver = new AP_Beacon_Marvelmind(*this, serial_manager);
+    } else if (_type == AP_BeaconType_Nooploop) {
+        _driver = new AP_Beacon_Nooploop(*this, serial_manager);
     }
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     if (_type == AP_BeaconType_SITL) {
