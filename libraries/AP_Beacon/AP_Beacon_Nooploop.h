@@ -44,20 +44,8 @@ private:
     // message is stored in _msgbuf
     MsgType parse_byte(uint8_t b);
 
-    void request_setting();
     void parse_node_frame2();
     void parse_setting_frame0();
-
-    // enum of valid function marks
-    enum class FunctionMark : uint8_t {
-        ANCHOR_FRAME0 = 0x00,
-        SETTING_FRAME0 = 0x00,
-        TAG_FRAME0 = 0x01,
-        NODE_FRAME0 = 0x02,
-        NODE_FRAME1 = 0x03,
-        NODE_FRAME2 = 0x04,
-        NODE_FRAME3 = 0x05
-    };
 
     enum class ParseState : uint8_t {
         HEADER = 0,         // waiting for header

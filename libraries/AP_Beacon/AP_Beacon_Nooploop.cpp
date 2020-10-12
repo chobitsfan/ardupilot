@@ -54,22 +54,11 @@ void AP_Beacon_Nooploop::update(void)
             //hal.console->printf("nooploop nf2\n");
             if (_anchor_pos_avail) {
                 parse_node_frame2();
-            } else {
-                request_setting();
             }
         } else if (type == MsgType::SETTING_FRAME0) {
             //hal.console->printf("nooploop sf0\n");
             parse_setting_frame0();
         } 
-    }
-}
-
-void AP_Beacon_Nooploop::request_setting()
-{
-    if (_uart->txspace() >= 128) {
-        uint8_t buf[128] = {0x54, 0, 1};
-        buf[127] = 0x55;
-        _uart->write(buf, 128);
     }
 }
 
@@ -189,7 +178,7 @@ void AP_Beacon_Nooploop::parse_node_frame2()
     // estimated precision for x,y position in meters
     const float precision_x = _msgbuf[NOOPLOOP_NODE_FRAME2_PRECISION_X] * 0.01;
     const float precision_y = _msgbuf[NOOPLOOP_NODE_FRAME2_PRECISION_Y] * 0.01;
-    const float pos_err = sqrtf(sq(precision_x)+sq(precision_y));
+    const float pos_err = MAX(0.1f, sqrtf(sq(precision_x)+sq(precision_y)));
 
     // x,y,z position in m*1000 in ENU frame
     const int32_t pos_x = ((int32_t)_msgbuf[NOOPLOOP_NODE_FRAME2_POSX+2] << 24 | (int32_t)_msgbuf[NOOPLOOP_NODE_FRAME2_POSX+1] << 16 | (int32_t)_msgbuf[NOOPLOOP_NODE_FRAME2_POSX] << 8) >> 8;
