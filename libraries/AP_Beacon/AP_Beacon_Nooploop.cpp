@@ -88,14 +88,17 @@ void AP_Beacon_Nooploop::update(void)
 
 void AP_Beacon_Nooploop::request_setting()
 {
-    //send setting_frame0 to tag, tag will fill anchor position and ack
-    _uart->write((uint8_t)0x54);
-    _uart->write((uint8_t)0);
-    _uart->write((uint8_t)1);
-    for (uint8_t i = 0; i < 124; i++) {
-        _uart->write((uint8_t)0); //manual states filled with any char, but in fact only 0 works
-    }
-    _uart->write((uint8_t)0x55);
+#if 0
+    uint8_t buf[128] = {0x54, 0, 1};
+    buf[127] = 0x55;
+    _uart->write(buf, 128);
+#else
+    set_beacon_position(0, Vector3f(_frontend.a0_y, _frontend.a0_x, -1));
+    set_beacon_position(1, Vector3f(_frontend.a1_y, _frontend.a1_x, -1));
+    set_beacon_position(2, Vector3f(_frontend.a2_y, _frontend.a2_x, -1));
+    set_beacon_position(3, Vector3f(_frontend.a3_y, _frontend.a3_x, -1));
+    _anchor_pos_avail = true;
+#endif
 }
 
 // process one byte received on serial port

@@ -104,6 +104,15 @@ public:
 
     static const struct AP_Param::GroupInfo var_info[];
 
+    AP_Float a0_x;
+    AP_Float a0_y;
+    AP_Float a1_x;
+    AP_Float a1_y;
+    AP_Float a2_x;
+    AP_Float a2_y;
+    AP_Float a3_x;
+    AP_Float a3_y;
+
 private:
 
     static AP_Beacon *_singleton;

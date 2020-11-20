@@ -70,6 +70,38 @@ const AP_Param::GroupInfo AP_Beacon::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("_ORIENT_YAW", 4, AP_Beacon, orient_yaw, 0),
 
+    // @Param: _A0_X
+    // @User: Advanced
+    AP_GROUPINFO("_A0_X", 5, AP_Beacon, a0_x, 0),
+
+    // @Param: _A0_Y
+    // @User: Advanced
+    AP_GROUPINFO("_A0_Y", 6, AP_Beacon, a0_y, 0),
+
+    // @Param: _A1_X
+    // @User: Advanced
+    AP_GROUPINFO("_A1_X", 7, AP_Beacon, a1_x, 0),
+
+    // @Param: _A1_Y
+    // @User: Advanced
+    AP_GROUPINFO("_A1_Y", 8, AP_Beacon, a1_y, 0),
+
+    // @Param: _A2_X
+    // @User: Advanced
+    AP_GROUPINFO("_A2_X", 9, AP_Beacon, a2_x, 0),
+
+    // @Param: _A2_Y
+    // @User: Advanced
+    AP_GROUPINFO("_A2_Y", 10, AP_Beacon, a2_y, 0),
+
+    // @Param: _A3_X
+    // @User: Advanced
+    AP_GROUPINFO("_A3_X", 11, AP_Beacon, a3_x, 0),
+
+    // @Param: _A3_Y
+    // @User: Advanced
+    AP_GROUPINFO("_A3_Y", 12, AP_Beacon, a3_y, 0),
+
     AP_GROUPEND
 };
 
