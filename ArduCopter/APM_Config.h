@@ -18,7 +18,7 @@
 #define PARACHUTE             DISABLED            // disable parachute release to save 1k of flash
 //#define NAV_GUIDED            DISABLED            // disable external navigation computer ability to control vehicle through MAV_CMD_NAV_GUIDED mission commands
 //#define OPTFLOW               DISABLED            // disable optical flow sensor to save 5K of flash space
-//#define FRSKY_TELEM_ENABLED   DISABLED            // disable FRSky telemetry
+#define FRSKY_TELEM_ENABLED   DISABLED            // disable FRSky telemetry
 #define ADSB_ENABLED          DISABLED            // disable ADSB support
 #define PRECISION_LANDING     DISABLED            // disable precision landing using companion computer or IRLock sensor
 #define BEACON_ENABLED        DISABLED            // disable beacon support
@@ -33,10 +33,10 @@
 //#define MODE_CIRCLE_ENABLED   DISABLED            // disable circle mode support
 #define MODE_DRIFT_ENABLED    DISABLED            // disable drift mode support
 #define MODE_FLIP_ENABLED     DISABLED            // disable flip mode support
-//#define MODE_FOLLOW_ENABLED   DISABLED            // disable follow mode support
+#define MODE_FOLLOW_ENABLED   DISABLED            // disable follow mode support
 //#define MODE_GUIDED_ENABLED   DISABLED            // disable guided mode support
 //#define MODE_GUIDED_NOGPS_ENABLED   DISABLED      // disable guided/nogps mode support
-//#define MODE_LOITER_ENABLED   DISABLED            // disable loiter mode support
+#define MODE_LOITER_ENABLED   DISABLED            // disable loiter mode support
 //#define MODE_POSHOLD_ENABLED  DISABLED            // disable poshold mode support
 //#define MODE_RTL_ENABLED      DISABLED            // disable rtl mode support
 #define MODE_SMARTRTL_ENABLED DISABLED            // disable smartrtl mode support
