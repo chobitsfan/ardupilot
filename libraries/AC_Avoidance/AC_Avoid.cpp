@@ -422,20 +422,12 @@ void AC_Avoid::adjust_roll_pitch(float &roll, float &pitch, float veh_angle_max)
     // add maximum positive and negative percentages together for roll and pitch, convert to centi-degrees
     Vector2f rp_out((roll_positive + roll_negative) * 4500.0f, (pitch_positive + pitch_negative) * 4500.0f);
 
-    // apply avoidance angular limits
-    // the object avoidance lean angle is never more than 75% of the total angle-limit to allow the pilot to override
-    const float angle_limit = constrain_float(_angle_max, 0.0f, veh_angle_max * AC_AVOID_ANGLE_MAX_PERCENT);
-    float vec_len = rp_out.length();
-    if (vec_len > angle_limit) {
-        rp_out *= (angle_limit / vec_len);
-    }
-
     // add passed in roll, pitch angles
     rp_out.x += roll;
     rp_out.y += pitch;
 
     // apply total angular limits
-    vec_len = rp_out.length();
+    float vec_len = rp_out.length();
     if (vec_len > veh_angle_max) {
         rp_out *= (veh_angle_max / vec_len);
     }
