@@ -394,6 +394,14 @@ const AP_Param::Info Copter::var_info[] = {
     // @Range: 2000 4500
     // @User: Advanced
     GSCALAR(poshold_brake_angle_max, "PHLD_BRAKE_ANGLE",  POSHOLD_BRAKE_ANGLE_DEFAULT),
+
+    // @Param: PHLD_ANGLE_MAX
+    // @DisplayName: PosHold Angle Max
+    // @Description: PosHold maximum lean angle
+    // @Units: cdeg
+    // @Range: 1000 4500
+    // @User: Advanced
+    GSCALAR(poshold_angle_max, "PHLD_ANGLE_MAX", DEFAULT_ANGLE_MAX),
 #endif
 
     // @Param: LAND_REPOSITION
