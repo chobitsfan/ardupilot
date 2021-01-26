@@ -422,19 +422,8 @@ void AC_Avoid::adjust_roll_pitch(float &roll, float &pitch, float veh_angle_max)
     // add maximum positive and negative percentages together for roll and pitch, convert to centi-degrees
     Vector2f rp_out((roll_positive + roll_negative) * 4500.0f, (pitch_positive + pitch_negative) * 4500.0f);
 
-    // add passed in roll, pitch angles
-    rp_out.x += roll;
-    rp_out.y += pitch;
-
-    // apply total angular limits
-    float vec_len = rp_out.length();
-    if (vec_len > veh_angle_max) {
-        rp_out *= (veh_angle_max / vec_len);
-    }
-
-    // return adjusted roll, pitch
-    roll = rp_out.x;
-    pitch = rp_out.y;
+    roll += rp_out.x;
+    pitch += rp_out.y;
 }
 
 /*
