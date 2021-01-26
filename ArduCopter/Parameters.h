@@ -111,7 +111,7 @@ public:
         k_param_battery,
         k_param_fs_batt_mah,            // unused - moved to AP_BattMonitor
         k_param_angle_rate_max,         // remove
-        k_param_rssi_range,             // unused, replaced by rssi_ library parameters
+        k_param_poshold_angle_max,
         k_param_rc_feel_rp,             // deprecated
         k_param_NavEKF,                 // deprecated - remove
         k_param_mission,                // mission library
@@ -417,6 +417,7 @@ public:
 #if MODE_POSHOLD_ENABLED == ENABLED
     AP_Int16        poshold_brake_rate;         // PosHold flight mode's rotation rate during braking in deg/sec
     AP_Int16        poshold_brake_angle_max;    // PosHold flight mode's max lean angle during braking in centi-degrees
+    AP_Int16        poshold_angle_max;    // PosHold flight mode's max lean angle in centi-degrees
 #endif
 
     // Waypoints
