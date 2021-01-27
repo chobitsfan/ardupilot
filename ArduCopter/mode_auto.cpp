@@ -185,42 +185,9 @@ void ModeAuto::takeoff_start(const Location& dest_loc)
 {
     _mode = SubMode::TAKEOFF;
 
-    Location dest(dest_loc);
-
-    if (!copter.current_loc.initialised()) {
-        // vehicle doesn't know where it is ATM.  We should not
-        // initialise our takeoff destination without knowing this!
-        return;
-    }
-
-    // set horizontal target
-    dest.lat = copter.current_loc.lat;
-    dest.lng = copter.current_loc.lng;
-
-    // get altitude target
-    int32_t alt_target;
-    if (!dest.get_alt_cm(Location::AltFrame::ABOVE_HOME, alt_target)) {
-        // this failure could only happen if take-off alt was specified as an alt-above terrain and we have no terrain data
-        AP::logger().Write_Error(LogErrorSubsystem::TERRAIN, LogErrorCode::MISSING_TERRAIN_DATA);
-        // fall back to altitude above current altitude
-        alt_target = copter.current_loc.alt + dest.alt;
-    }
-
-    // sanity check target
-    if (alt_target < copter.current_loc.alt) {
-        dest.set_alt_cm(copter.current_loc.alt, Location::AltFrame::ABOVE_HOME);
-    }
-    // Note: if taking off from below home this could cause a climb to an unexpectedly high altitude
-    if (alt_target < 100) {
-        dest.set_alt_cm(100, Location::AltFrame::ABOVE_HOME);
-    }
-
-    // set waypoint controller target
-    if (!wp_nav->set_wp_destination_loc(dest)) {
-        // failure to set destination can only be because of missing terrain data
-        copter.failsafe_terrain_on_event();
-        return;
-    }
+    const Vector3f& curr_pos = inertial_nav.get_position();
+    // no need to check return status because terrain data is not used
+    wp_nav->set_wp_destination(Vector3f(curr_pos.x, curr_pos.y, dest_loc.alt), false);
 
     // initialise yaw
     auto_yaw.set_mode(AUTO_YAW_HOLD);
@@ -1134,35 +1101,18 @@ Location ModeAuto::loc_from_cmd(const AP_Mission::Mission_Command& cmd, const Lo
 // do_nav_wp - initiate move to next waypoint
 void ModeAuto::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
-    // calculate default location used when lat, lon or alt is zero
-    Location default_loc = copter.current_loc;
-    if (wp_nav->is_active() && wp_nav->reached_wp_destination()) {
-        if (!wp_nav->get_wp_destination_loc(default_loc)) {
-            // this should never happen
-            INTERNAL_ERROR(AP_InternalError::error_t::flow_of_control);
-        }
-    }
-
-    // get waypoint's location from command and send to wp_nav
-    const Location dest_loc = loc_from_cmd(cmd, default_loc);
-    if (!wp_nav->set_wp_destination_loc(dest_loc)) {
-        // failure to set destination can only be because of missing terrain data
-        copter.failsafe_terrain_on_event();
-        return;
-    }
-
-    _mode = SubMode::WP;
-
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;
     // this is the delay, stored in seconds
     loiter_time_max = cmd.p1;
 
-    // set next destination if necessary
-    if (!set_next_wp(cmd, dest_loc)) {
-        // failure to set next destination can only be because of missing terrain data
-        copter.failsafe_terrain_on_event();
-        return;
+    // Set wp navigation target
+    _mode = Auto_WP;
+    wp_nav->set_wp_destination(Vector3f(cmd.content.location.lat, cmd.content.location.lng, cmd.content.location.alt), false);
+    // initialise yaw
+    // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
+    if (auto_yaw.mode() != AUTO_YAW_ROI) {
+        auto_yaw.set_mode_to_default(false);
     }
 
     // initialise yaw
