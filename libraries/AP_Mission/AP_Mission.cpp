@@ -1098,14 +1098,6 @@ MAV_MISSION_RESULT AP_Mission::mavlink_int_to_mission_cmd(const mavlink_mission_
 
     // copy location from mavlink to command
     if (stored_in_location(cmd.id)) {
-
-        // sanity check location
-        if (!check_lat(packet.x)) {
-            return MAV_MISSION_INVALID_PARAM5_X;
-        }
-        if (!check_lng(packet.y)) {
-            return MAV_MISSION_INVALID_PARAM6_Y;
-        }
         if (isnan(packet.z) || fabsf(packet.z) >= LOCATION_ALT_MAX_M) {
             return MAV_MISSION_INVALID_PARAM7;
         }
@@ -1182,16 +1174,8 @@ MAV_MISSION_RESULT AP_Mission::convert_MISSION_ITEM_to_MISSION_ITEM_INT(const ma
         break;
 
     default:
-        // all other commands use x and y as lat/lon. We need to
-        // multiply by 1e7 to convert to int32_t
-        if (!check_lat(packet.x)) {
-            return MAV_MISSION_INVALID_PARAM5_X;
-        }
-        if (!check_lng(packet.y)) {
-            return MAV_MISSION_INVALID_PARAM6_Y;
-        }
-        mav_cmd.x = packet.x * 1.0e7f;
-        mav_cmd.y = packet.y * 1.0e7f;
+        mav_cmd.x = packet.x;
+        mav_cmd.y = packet.y;
         break;
     }
 
@@ -1223,16 +1207,8 @@ MAV_MISSION_RESULT AP_Mission::convert_MISSION_ITEM_INT_to_MISSION_ITEM(const ma
         break;
 
     default:
-        // all other commands use x and y as lat/lon. We need to
-        // multiply by 1e-7 to convert to float
-        item.x = item_int.x * 1.0e-7f;
-        item.y = item_int.y * 1.0e-7f;
-        if (!check_lat(item.x)) {
-            return MAV_MISSION_INVALID_PARAM5_X;
-        }
-        if (!check_lng(item.y)) {
-            return MAV_MISSION_INVALID_PARAM6_Y;
-        }
+        item.x = item_int.x;
+        item.y = item_int.y;
         break;
     }
 
