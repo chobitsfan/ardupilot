@@ -1105,7 +1105,7 @@ MAV_MISSION_RESULT AP_Mission::mavlink_int_to_mission_cmd(const mavlink_mission_
         cmd.content.location.lat = packet.x;
         cmd.content.location.lng = packet.y;
 
-        cmd.content.location.alt = packet.z * 100.0f;       // convert packet's alt (m) to cmd alt (cm)
+        cmd.content.location.alt = packet.z;
 
         switch (packet.frame) {
 
