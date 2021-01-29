@@ -131,6 +131,8 @@ public:
     bool breached() const WARN_IF_UNUSED;
     //  breached(Location&) - returns true if location is outside the boundary
     bool breached(const Location& loc) const WARN_IF_UNUSED;
+    // breached(Vector2f&) - returns true of pos_cm (an offset in cm from the EKF origin) breaches any fence
+    bool breached(const Vector2f& pos_cm) const WARN_IF_UNUSED;
 
     // returns true if a polygonal include fence could be returned
     bool inclusion_boundary_available() const WARN_IF_UNUSED {
