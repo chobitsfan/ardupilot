@@ -5,6 +5,7 @@
 #include <AP_Terrain/AP_Terrain.h>
 #include <GCS_MAVLink/GCS.h>
 #include <AP_AHRS/AP_AHRS.h>
+#include <AC_Fence/AC_Fence.h>
 
 const AP_Param::GroupInfo AP_Mission::var_info[] = {
 
@@ -1147,6 +1148,10 @@ MAV_MISSION_RESULT AP_Mission::mavlink_int_to_mission_cmd(const mavlink_mission_
     if (stored_in_location(cmd.id)) {
         if (isnan(packet.z) || fabsf(packet.z) >= LOCATION_ALT_MAX_M) {
             return MAV_MISSION_INVALID_PARAM7;
+        }
+
+        if (AP::fence()->polyfence().breached(Vector2f(packet.x, packet.y))) {
+            return MAV_MISSION_DENIED;
         }
 
         cmd.content.location.lat = packet.x;
