@@ -461,6 +461,10 @@ void Copter::twentyfive_hz_logging()
 // three_hz_loop - 3.3hz loop
 void Copter::three_hz_loop()
 {
+    if (motors->armed() && flightmode->requires_GPS() && (!visual_odom.healthy())) {
+        set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+    }
+
     // check if we've lost contact with the ground station
     failsafe_gcs_check();
 
