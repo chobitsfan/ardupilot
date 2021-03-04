@@ -527,6 +527,10 @@ void Copter::one_hz_loop()
 #endif
 
     AP_Notify::flags.flying = !ap.land_complete;
+
+    if (motors->armed() && flightmode->requires_GPS() && visual_odom.enabled() && (!visual_odom.healthy())) {
+        set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+    }
 }
 
 void Copter::init_simple_bearing()
