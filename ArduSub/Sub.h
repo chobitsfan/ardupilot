@@ -268,6 +268,7 @@ private:
 
     // Guided
     GuidedMode guided_mode;  // controls which controller is run (pos or vel)
+    bool send_notification;     // used to send one time notification to ground station
 
     // Circle
     bool circle_pilot_yaw_override; // true if pilot is overriding yaw

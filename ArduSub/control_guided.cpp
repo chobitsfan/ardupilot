@@ -40,6 +40,8 @@ bool Sub::guided_init(bool ignore_checks)
         return false;
     }
 
+    send_notification = false;
+
     // start in position control mode
     guided_pos_control_start();
     return true;
@@ -156,6 +158,7 @@ bool Sub::guided_set_destination(const Vector3f& destination)
     // no need to check return status because terrain data is not used
     wp_nav.set_wp_destination(destination, false);
 
+    send_notification = true;
     // log target
     Log_Write_GuidedTarget(guided_mode, destination, Vector3f());
     return true;
@@ -188,6 +191,7 @@ bool Sub::guided_set_destination(const Location& dest_loc)
         return false;
     }
 
+    send_notification = true;
     // log target
     Log_Write_GuidedTarget(guided_mode, Vector3f(dest_loc.lat, dest_loc.lng, dest_loc.alt),Vector3f());
     return true;
@@ -329,6 +333,11 @@ void Sub::guided_pos_control_run()
     } else {
         // roll, pitch from waypoint controller, yaw heading from auto_heading()
         attitude_control.input_euler_angle_roll_pitch_yaw(channel_roll->get_control_in(), channel_pitch->get_control_in(), get_auto_heading(), true);
+    }
+
+    if (send_notification && wp_nav.reached_wp_destination()) {
+        send_notification = false;
+        gcs().send_mission_item_reached_message(0);
     }
 }
 
