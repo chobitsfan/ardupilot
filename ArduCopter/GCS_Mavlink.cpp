@@ -134,6 +134,7 @@ void GCS_MAVLINK_Copter::send_position_target_local_ned()
 
     if (guided_mode == Guided_WP) {
         type_mask = 0x0FF8; // ignore everything except position
+        if (copter.wp_nav->reached_wp_destination()) type_mask |= 0x1000;
         target_pos = copter.wp_nav->get_wp_destination() * 0.01f; // convert to metres
     } else if (guided_mode == Guided_Velocity) {
         type_mask = 0x0FC7; // ignore everything except velocity
