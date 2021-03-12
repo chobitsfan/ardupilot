@@ -536,6 +536,19 @@ void Copter::one_hz_loop()
     if (motors->armed() && flightmode->requires_GPS() && (!visual_odom.healthy())) {
         set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
     }
+
+    if (avoid.limits_active()) {
+        const mavlink_collision_t packet{
+            id: 0,
+            time_to_minimum_delta: 0,
+            altitude_minimum_delta: 0,
+            horizontal_minimum_delta: 0,
+            src: 0,
+            action: 0,
+            threat_level: 0,
+        };
+        gcs().send_to_active_channels(MAVLINK_MSG_ID_COLLISION, (const char *)&packet);
+    }
 }
 
 void Copter::init_simple_bearing()

@@ -1437,6 +1437,7 @@ bool AC_Avoid::get_fence_roll_pitch_pct(float &roll_positive, float &roll_negati
             }
         }
     }
+    if (adjusted) _last_limit_time = AP_HAL::millis();
     return adjusted;
 }
 
