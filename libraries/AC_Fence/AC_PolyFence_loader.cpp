@@ -257,6 +257,52 @@ bool AC_PolyFence_loader::breached(const Location& loc) const
     return false;
 }
 
+bool AC_PolyFence_loader::breached(const Vector2f& pos_cm) const
+{
+    if (!loaded()) {
+        return false;
+    }
+
+    // check we are inside each inclusion zone:
+    for (uint8_t i=0; i<_num_loaded_inclusion_boundaries; i++) {
+        const InclusionBoundary &boundary = _loaded_inclusion_boundary[i];
+        if (Polygon_outside(pos_cm, boundary.points, boundary.count)) {
+            return true;
+        }
+    }
+
+    // check we are outside each exclusion zone:
+    for (uint8_t i=0; i<_num_loaded_exclusion_boundaries; i++) {
+        const ExclusionBoundary &boundary = _loaded_exclusion_boundary[i];
+        if (!Polygon_outside(pos_cm, boundary.points, boundary.count)) {
+            return true;
+        }
+    }
+
+    // check circular excludes
+    for (uint8_t i=0; i<_num_loaded_circle_exclusion_boundaries; i++) {
+        const ExclusionCircle &circle = _loaded_circle_exclusion_boundary[i];
+        const Vector2f diff_cm = pos_cm - circle.pos_cm;
+        const float diff_cm_squared = diff_cm.length_squared();
+        if (diff_cm_squared < sq(circle.radius*100.0f)) {
+            return true;
+        }
+    }
+
+    // check circular includes
+    for (uint8_t i=0; i<_num_loaded_circle_inclusion_boundaries; i++) {
+        const InclusionCircle &circle = _loaded_circle_inclusion_boundary[i];
+        const Vector2f diff_cm = pos_cm - circle.pos_cm;
+        const float diff_cm_squared = diff_cm.length_squared();
+        if (diff_cm_squared > sq(circle.radius*100.0f)) {
+            return true;
+        }
+    }
+
+    // no fence breached
+    return false;
+}
+
 bool AC_PolyFence_loader::formatted() const
 {
     return (fence_storage.read_uint8(0) == new_fence_storage_magic &&

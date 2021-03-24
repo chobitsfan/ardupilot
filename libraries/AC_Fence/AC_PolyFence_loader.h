@@ -131,6 +131,7 @@ public:
     bool breached() const WARN_IF_UNUSED;
     //  breached(Location&) - returns true if location is outside the boundary
     bool breached(const Location& loc) const WARN_IF_UNUSED;
+    bool breached(const Vector2f& pos_cm) const;
 
     // returns true if a polygonal include fence could be returned
     bool inclusion_boundary_available() const WARN_IF_UNUSED {
