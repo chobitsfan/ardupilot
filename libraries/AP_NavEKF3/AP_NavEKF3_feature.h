@@ -14,10 +14,7 @@
 #define EK3_FEATURE_BODY_ODOM EK3_FEATURE_ALL || APM_BUILD_TYPE(APM_BUILD_Rover) || BOARD_FLASH_SIZE > 1024
 #endif
 
-// external navigation on 2M boards
-#ifndef EK3_FEATURE_EXTERNAL_NAV
-#define EK3_FEATURE_EXTERNAL_NAV EK3_FEATURE_ALL || BOARD_FLASH_SIZE > 1024
-#endif
+#define EK3_FEATURE_EXTERNAL_NAV 1
 
 // drag fusion on 2M boards
 #ifndef EK3_FEATURE_DRAG_FUSION
