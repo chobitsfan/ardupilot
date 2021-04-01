@@ -30,6 +30,7 @@ bool ModePosHold::init(bool ignore_checks)
     // initialize vertical speeds and acceleration
     pos_control->set_max_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
     pos_control->set_max_accel_z(g.pilot_accel_z);
+    pos_control->set_max_accel_xy(100.0f);
 
     // initialise position and desired velocity
     if (!pos_control->is_active_z()) {
@@ -62,6 +63,25 @@ bool ModePosHold::init(bool ignore_checks)
     init_wind_comp_estimate();
 
     return true;
+}
+
+bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
+{
+    const AC_Fence *fence = AP::fence();
+    float fwd = -target_pitch;
+    float right = target_roll;
+    Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
+    ne.normalize();
+    Vector2f pos_ne;
+    Vector3f stopping_point;
+    pos_control->get_stopping_point_xy(stopping_point);
+    pos_ne.x = stopping_point.x;
+    pos_ne.y = stopping_point.y;
+    if ((fabsf(inertial_nav.get_speed_xy()) > POSHOLD_SPEED_0) && fence->polyfence().breached(pos_ne)) {
+        return true;
+    } else if (ahrs.get_relative_position_NE_origin(pos_ne)) {
+        return fence->polyfence().breached((pos_ne+ne)*100);
+    } else return false;
 }
 
 // poshold_run - runs the PosHold controller
@@ -175,6 +195,12 @@ void ModePosHold::run()
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+
+        if (brake_at_fence(target_pitch, target_roll)) {
+            target_pitch = 0;
+            target_roll = 0;
+        }
+
         break;
     }
 
