@@ -30,6 +30,7 @@ bool ModePosHold::init(bool ignore_checks)
     // set vertical speed and acceleration limits
     pos_control->set_max_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
     pos_control->set_correction_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
+    pos_control->set_max_speed_accel_xy(500.0f/*POSCONTROL_SPEED*/, 100.0f/*POSCONTROL_ACCEL_XY*/);
 
     // initialise the vertical position controller
     if (!pos_control->is_active_z()) {
@@ -61,6 +62,114 @@ bool ModePosHold::init(bool ignore_checks)
     init_wind_comp_estimate();
 
     return true;
+}
+
+bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
+{
+    const AC_Fence *fence = AP::fence();
+    if (fence && fence->enabled()) {
+        Vector3f pos_cm;
+        const Vector3f& vel = inertial_nav.get_velocity();
+        if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
+            pos_control->get_stopping_point_xy(pos_cm);
+            if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
+                return true;
+            }
+        } else {
+            pos_cm = inertial_nav.get_position();
+            float fwd = -target_pitch;
+            float right = target_roll;
+            Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
+            ne.normalize();
+            return fence->polyfence().breached(Vector2f(pos_cm.x+ne.x*50,pos_cm.y+ne.y*50));
+        }
+    }
+    return false;
+}
+
+float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
+    AC_Fence *fence = AP::fence();
+    if (fence && fence->enabled()) {
+        float kP = pos_control->get_pos_z_p().kP();
+        float accel_cmss = pos_control->get_max_accel_z();
+
+        // do not adjust climb_rate if level
+        if (is_zero(target_rate)) {
+            return target_rate;
+        }
+
+        // limit acceleration
+        const float accel_cmss_limited = MIN(accel_cmss, AC_AVOID_ACCEL_CMSS_MAX);
+
+        //bool limit_alt = false;
+        float alt_diff = 0.0f;   // distance from altitude limit to vehicle in metres (positive means vehicle is below limit)
+
+        const AP_AHRS &_ahrs = AP::ahrs();
+
+        // calculate distance below fence
+        /*if (fence && (fence->get_enabled_fences() & AC_FENCE_TYPE_ALT_MAX) > 0) {
+            // calculate distance from vehicle to safe altitude
+            float veh_alt;
+            if (_ahrs.get_relative_position_D_origin(veh_alt)) {
+                // _fence.get_safe_alt_max() is UP, veh_alt is DOWN:
+                alt_diff = fence->get_safe_alt_max() + veh_alt;
+                limit_alt = true;
+            }
+        }*/
+
+        float veh_alt;
+        if (_ahrs.get_relative_position_D_origin(veh_alt)) {
+            if (target_rate > 0) {
+                // _fence.get_safe_alt_max() is UP, veh_alt is DOWN:
+                alt_diff = fence->get_safe_alt_max() + veh_alt;
+                // do not allow climbing if we've breached the safe altitude
+                if (alt_diff <= 0.0f) {
+                    return 0;
+                }
+                // limit climb rate
+                float max_speed;
+                if (is_zero(kP)) {
+                    max_speed = safe_sqrt(2.0f * alt_diff * 100.0f * accel_cmss_limited);
+                } else {
+                    max_speed = sqrt_controller(alt_diff * 100.0f, kP, accel_cmss_limited, G_Dt);
+                }
+                target_rate = MIN(max_speed, target_rate);
+            } else {
+                alt_diff = fence->get_safe_alt_min() + veh_alt;
+                if (alt_diff >= 0.0f) {
+                    return 0;
+                }
+                alt_diff = -alt_diff;
+                // limit climb rate
+                float max_speed;
+                if (is_zero(kP)) {
+                    max_speed = safe_sqrt(2.0f * alt_diff * 100.0f * accel_cmss_limited);
+                } else {
+                    max_speed = sqrt_controller(alt_diff * 100.0f, kP, accel_cmss_limited, G_Dt);
+                }
+                target_rate = MAX(-max_speed, target_rate);
+            }
+        }
+    }
+#if 0
+    if (limit_alt) {
+        // do not allow climbing if we've breached the safe altitude
+        if (alt_diff <= 0.0f) {
+            target_rate = MIN(target_rate, 0.0f);
+            return target_rate;
+        }
+
+        // limit climb rate
+        float max_speed;
+        if (is_zero(kP)) {
+            max_speed = safe_sqrt(2.0f * alt_diff * 100.0f * accel_cmss_limited);
+        } else {
+            max_speed = sqrt_controller(alt_diff * 100.0f, kP, accel_cmss_limited, G_Dt);
+        }
+        target_rate = MIN(max_speed, target_rate);
+    }
+#endif
+    return target_rate;
 }
 
 // poshold_run - runs the PosHold controller
@@ -165,9 +274,19 @@ void ModePosHold::run()
         }
 
         // get avoidance adjusted climb rate
-        target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+        target_climb_rate = get_fence_adjusted_climbrate(target_climb_rate);
 
         pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate, false);
+
+        if (fence_braking) {
+            target_pitch = 0;
+            target_roll = 0;
+        } else if (brake_at_fence(target_pitch, target_roll)) {
+            target_pitch = 0;
+            target_roll = 0;
+            fence_braking = true;
+        }
+
         break;
     }
 
@@ -394,6 +513,7 @@ void ModePosHold::run()
         // handle combined roll+pitch mode
         switch (roll_mode) {
             case RPMode::BRAKE_TO_LOITER: {
+                fence_braking = false;
                 // reduce brake_to_loiter timer
                 if (brake.to_loiter_timer > 0) {
                     brake.to_loiter_timer--;
@@ -442,6 +562,7 @@ void ModePosHold::run()
                 break;
             }
             case RPMode::LOITER:
+                fence_braking = false;
                 // run loiter controller
                 loiter_nav->update(false);
 
