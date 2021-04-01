@@ -991,6 +991,7 @@ protected:
 
 private:
 
+    bool brake_at_fence(float pitch, float roll);
     void update_pilot_lean_angle(float &lean_angle_filtered, float &lean_angle_raw);
     float mix_controls(float mix_ratio, float first_control, float second_control);
     void update_brake_angle_from_velocity(float &brake_angle, float velocity);

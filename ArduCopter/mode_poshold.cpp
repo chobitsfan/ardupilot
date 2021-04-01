@@ -64,6 +64,20 @@ bool ModePosHold::init(bool ignore_checks)
     return true;
 }
 
+bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
+{
+    float p_angle_max = g.poshold_angle_max;
+    float fwd = (-target_pitch)/p_angle_max;
+    float right = target_roll/p_angle_max;
+    Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
+    ne.normalize();
+    Vector2f pos_ne;
+    if (ahrs.get_relative_position_NE_origin(pos_ne)) {
+        const AC_Fence *fence = AP::fence();
+        return fence->polyfence().breached((pos_ne+ne)*100);
+    } else return false;
+}
+
 // poshold_run - runs the PosHold controller
 // should be called at 100hz or more
 void ModePosHold::run()
@@ -176,6 +190,12 @@ void ModePosHold::run()
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+
+        if (brake_at_fence(target_pitch, target_roll)) {
+            target_pitch = 0;
+            target_roll = 0;
+        }
+
         break;
     }
 
