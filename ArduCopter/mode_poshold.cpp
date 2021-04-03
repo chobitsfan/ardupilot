@@ -66,14 +66,19 @@ bool ModePosHold::init(bool ignore_checks)
 
 bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
 {
-    float p_angle_max = g.poshold_angle_max;
-    float fwd = (-target_pitch)/p_angle_max;
-    float right = target_roll/p_angle_max;
+    const AC_Fence *fence = AP::fence();
+    float fwd = -target_pitch;
+    float right = target_roll;
     Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
     ne.normalize();
     Vector2f pos_ne;
-    if (ahrs.get_relative_position_NE_origin(pos_ne)) {
-        const AC_Fence *fence = AP::fence();
+    Vector3f stopping_point;
+    pos_control->get_stopping_point_xy(stopping_point);
+    pos_ne.x = stopping_point.x;
+    pos_ne.y = stopping_point.y;
+    if (fence->polyfence().breached(pos_ne)) {
+        return true;
+    } else if (ahrs.get_relative_position_NE_origin(pos_ne)) {
         return fence->polyfence().breached((pos_ne+ne)*100);
     } else return false;
 }
