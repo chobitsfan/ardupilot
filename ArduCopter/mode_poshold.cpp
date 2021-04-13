@@ -30,6 +30,7 @@ bool ModePosHold::init(bool ignore_checks)
     // initialize vertical speeds and acceleration
     pos_control->set_max_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
     pos_control->set_max_accel_z(g.pilot_accel_z);
+    pos_control->set_max_accel_xy(100.0f);
 
     // initialise position and desired velocity
     if (!pos_control->is_active_z()) {
@@ -76,7 +77,7 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
     pos_control->get_stopping_point_xy(stopping_point);
     pos_ne.x = stopping_point.x;
     pos_ne.y = stopping_point.y;
-    if (fence->polyfence().breached(pos_ne)) {
+    if ((fabsf(inertial_nav.get_speed_xy()) > POSHOLD_SPEED_0) && fence->polyfence().breached(pos_ne)) {
         return true;
     } else if (ahrs.get_relative_position_NE_origin(pos_ne)) {
         return fence->polyfence().breached((pos_ne+ne)*100);
