@@ -537,6 +537,7 @@ void Copter::one_hz_loop()
         set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
     }
 
+#if AC_AVOID_ENABLED
     if (avoid.limits_active()) {
         const mavlink_collision_t packet{
             id: 0,
@@ -549,6 +550,8 @@ void Copter::one_hz_loop()
         };
         gcs().send_to_active_channels(MAVLINK_MSG_ID_COLLISION, (const char *)&packet);
     }
+#endif
+
 }
 
 void Copter::init_simple_bearing()
