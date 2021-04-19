@@ -1019,6 +1019,7 @@ protected:
 
 private:
 
+    float get_fence_adjusted_climbrate(float target_rate);
     bool brake_at_fence(float pitch, float roll);
     void update_pilot_lean_angle(float &lean_angle_filtered, float &lean_angle_raw);
     float mix_controls(float mix_ratio, float first_control, float second_control);
