@@ -30,7 +30,7 @@ bool ModePosHold::init(bool ignore_checks)
     // initialize vertical speeds and acceleration
     pos_control->set_max_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
     pos_control->set_max_accel_z(g.pilot_accel_z);
-    pos_control->set_max_accel_xy(100.0f);
+    pos_control->set_max_accel_xy(100.0f/*POSCONTROL_ACCEL_XY*/);
 
     // initialise position and desired velocity
     if (!pos_control->is_active_z()) {
@@ -68,52 +68,53 @@ bool ModePosHold::init(bool ignore_checks)
 bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
 {
     const AC_Fence *fence = AP::fence();
-    float fwd = -target_pitch;
-    float right = target_roll;
-    Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
-    ne.normalize();
-    Vector2f pos_ne;
-    Vector3f stopping_point;
-    pos_control->get_stopping_point_xy(stopping_point);
-    pos_ne.x = stopping_point.x;
-    pos_ne.y = stopping_point.y;
-    if ((fabsf(inertial_nav.get_speed_xy()) > POSHOLD_SPEED_0) && fence->polyfence().breached(pos_ne)) {
-        return true;
-    } else if (ahrs.get_relative_position_NE_origin(pos_ne)) {
-        return fence->polyfence().breached((pos_ne+ne)*100);
-    } else return false;
+    if (fence && fence->enabled()) {
+        Vector3f pos_cm;
+        pos_control->get_stopping_point_xy(pos_cm);
+        if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
+            return true;
+        } else {
+            pos_cm = inertial_nav.get_position();
+            float fwd = -target_pitch;
+            float right = target_roll;
+            Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
+            ne.normalize();
+            return fence->polyfence().breached(Vector2f(pos_cm.x+ne.x*50,pos_cm.y+ne.y*50));
+        }
+    }
+    return false;
 }
 
 float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
-    float kP = pos_control->get_pos_z_p().kP();
-    float accel_cmss = pos_control->get_max_accel_z();
-
-    // do not adjust climb_rate if level
-    if (is_zero(target_rate)) {
-        return target_rate;
-    }
-
-    // limit acceleration
-    const float accel_cmss_limited = MIN(accel_cmss, AC_AVOID_ACCEL_CMSS_MAX);
-
-    //bool limit_alt = false;
-    float alt_diff = 0.0f;   // distance from altitude limit to vehicle in metres (positive means vehicle is below limit)
-
-    const AP_AHRS &_ahrs = AP::ahrs();
-
-    // calculate distance below fence
     AC_Fence *fence = AP::fence();
-    /*if (fence && (fence->get_enabled_fences() & AC_FENCE_TYPE_ALT_MAX) > 0) {
-        // calculate distance from vehicle to safe altitude
-        float veh_alt;
-        if (_ahrs.get_relative_position_D_origin(veh_alt)) {
-            // _fence.get_safe_alt_max() is UP, veh_alt is DOWN:
-            alt_diff = fence->get_safe_alt_max() + veh_alt;
-            limit_alt = true;
-        }
-    }*/
+    if (fence && fence->enabled()) {
+        float kP = pos_control->get_pos_z_p().kP();
+        float accel_cmss = pos_control->get_max_accel_z();
 
-    if (fence) {
+        // do not adjust climb_rate if level
+        if (is_zero(target_rate)) {
+            return target_rate;
+        }
+
+        // limit acceleration
+        const float accel_cmss_limited = MIN(accel_cmss, AC_AVOID_ACCEL_CMSS_MAX);
+
+        //bool limit_alt = false;
+        float alt_diff = 0.0f;   // distance from altitude limit to vehicle in metres (positive means vehicle is below limit)
+
+        const AP_AHRS &_ahrs = AP::ahrs();
+
+        // calculate distance below fence
+        /*if (fence && (fence->get_enabled_fences() & AC_FENCE_TYPE_ALT_MAX) > 0) {
+            // calculate distance from vehicle to safe altitude
+            float veh_alt;
+            if (_ahrs.get_relative_position_D_origin(veh_alt)) {
+                // _fence.get_safe_alt_max() is UP, veh_alt is DOWN:
+                alt_diff = fence->get_safe_alt_max() + veh_alt;
+                limit_alt = true;
+            }
+        }*/
+
         float veh_alt;
         if (_ahrs.get_relative_position_D_origin(veh_alt)) {
             if (target_rate > 0) {
