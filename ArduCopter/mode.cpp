@@ -551,6 +551,7 @@ void Mode::land_run_horizontal_control()
         loiter_nav->soften_for_landing();
     }
 
+#if 0
     // process pilot inputs
     if (!copter.failsafe.radio) {
         if ((g.throttle_behavior & THR_BEHAVE_HIGH_THROTTLE_CANCELS_LAND) != 0 && copter.rc_throttle_control_in_filter.get() > LAND_CANCEL_TRIGGER_THR){
@@ -583,6 +584,7 @@ void Mode::land_run_horizontal_control()
             auto_yaw.set_mode(AUTO_YAW_HOLD);
         }
     }
+#endif
 
 #if PRECISION_LANDING == ENABLED
     bool doing_precision_landing = !copter.ap.land_repo_active && copter.precland.target_acquired();
