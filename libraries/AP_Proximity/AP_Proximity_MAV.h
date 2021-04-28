@@ -40,6 +40,7 @@ private:
     uint32_t _last_msg_update_timestamp_ms;   // last stored mavlink message timestamp
     float _distance_max;        // max range of sensor in meters
     float _distance_min;        // min range of sensor in meters
+    uint32_t _last_near_miss_ms;
 
     // upward distance support
     uint32_t _last_upward_update_ms;    // system time of last update of upward distance
