@@ -2877,20 +2877,13 @@ MAV_RESULT GCS_MAVLINK::handle_rc_bind(const mavlink_command_long_t &packet)
     return MAV_RESULT_ACCEPTED;
 }
 
-uint64_t GCS_MAVLINK::timesync_receive_timestamp_ns() const
+uint64_t GCS_MAVLINK::timesync_receive_timestamp_us() const
 {
     uint64_t ret = _port->receive_time_constraint_us(PAYLOAD_SIZE(chan, TIMESYNC));
     if (ret == 0) {
         ret = AP_HAL::micros64();
     }
-    return ret*1000LL;
-}
-
-uint64_t GCS_MAVLINK::timesync_timestamp_ns() const
-{
-    // we add in our own system id try to ensure we only consider
-    // responses to our own timesync request messages
-    return AP_HAL::micros64()*1000LL + mavlink_system.sysid;
+    return ret;
 }
 
 /*
@@ -2910,7 +2903,7 @@ void GCS_MAVLINK::handle_timesync(const mavlink_message_t &msg)
             // response to an ancient request...
             return;
         }
-        const uint64_t round_trip_time_us = (timesync_receive_timestamp_ns() - _timesync_request.sent_ts1)*0.001f;
+        const uint64_t round_trip_time_us = timesync_receive_timestamp_us() - _timesync_request.sent_ts1;
 #if 0
         gcs().send_text(MAV_SEVERITY_INFO,
                         "timesync response sysid=%u (latency=%fms)",
@@ -2942,7 +2935,7 @@ void GCS_MAVLINK::handle_timesync(const mavlink_message_t &msg)
     // nanoseconds.  The client timestamp is as close as possible to
     // the time we received the TIMESYNC message.
     mavlink_timesync_t rsync;
-    rsync.tc1 = timesync_receive_timestamp_ns();
+    rsync.tc1 = timesync_receive_timestamp_us();
     rsync.ts1 = tsync.ts1;
 
     // respond with a timesync message
@@ -2958,7 +2951,7 @@ void GCS_MAVLINK::handle_timesync(const mavlink_message_t &msg)
  */
 void GCS_MAVLINK::send_timesync()
 {
-    _timesync_request.sent_ts1 = timesync_timestamp_ns();
+    _timesync_request.sent_ts1 = AP_HAL::micros64();
     mavlink_msg_timesync_send(
         chan,
         0,
