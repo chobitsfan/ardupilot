@@ -38,6 +38,7 @@ private:
     uint32_t _last_3d_msg_update_ms;   // last stored OBSTACLE_DISTANCE_3D message timestamp
     float _distance_max;        // max range of sensor in meters
     float _distance_min;        // min range of sensor in meters
+    uint32_t _last_near_miss_ms;
 
     // upward distance support
     uint32_t _last_upward_update_ms;    // system time of last update of upward distance

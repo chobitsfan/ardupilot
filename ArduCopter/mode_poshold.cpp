@@ -67,7 +67,7 @@ bool ModePosHold::init(bool ignore_checks)
 
 bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
 {
-    const AC_Fence *fence = AP::fence();
+    AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
         Vector3f pos_cm;
         pos_control->get_stopping_point_xy(pos_cm);
@@ -281,6 +281,10 @@ void ModePosHold::run()
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_fence_adjusted_climbrate(target_climb_rate);
+
+        if (g2.proximity.near_miss_alert) {
+            target_climb_rate = 200;
+        }
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
 

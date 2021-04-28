@@ -35,6 +35,10 @@ void AP_Proximity_MAV::update(void)
     } else {
         set_status(AP_Proximity::Status::Good);
     }
+
+    if (frontend.near_miss_alert && (AP_HAL::millis() - _last_near_miss_ms > 50)) {
+        frontend.near_miss_alert = 0;
+    }
 }
 
 // get distance upwards in meters. returns true on success
@@ -70,6 +74,12 @@ void AP_Proximity_MAV::handle_distance_sensor_msg(const mavlink_message_t &msg)
 {
     mavlink_distance_sensor_t packet;
     mavlink_msg_distance_sensor_decode(&msg, &packet);
+
+    if (packet.orientation == 10) {
+        _last_near_miss_ms = AP_HAL::millis();
+        frontend.near_miss_alert = 1;
+        return;
+    }
 
     // store distance to appropriate sector based on orientation field
     if (packet.orientation <= MAV_SENSOR_ROTATION_YAW_315) {
