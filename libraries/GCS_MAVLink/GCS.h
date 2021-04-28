@@ -456,9 +456,7 @@ protected:
 
     void send_timesync();
     // returns the time a timesync message was most likely received:
-    uint64_t timesync_receive_timestamp_ns() const;
-    // returns a timestamp suitable for packing into the ts1 field of TIMESYNC:
-    uint64_t timesync_timestamp_ns() const;
+    uint64_t timesync_receive_timestamp_us() const;
     void handle_timesync(const mavlink_message_t &msg);
     struct {
         int64_t sent_ts1;
