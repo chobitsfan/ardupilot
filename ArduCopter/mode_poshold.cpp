@@ -284,6 +284,8 @@ void ModePosHold::run()
 
         if (g2.proximity.near_miss_alert) {
             target_climb_rate = 200;
+            target_pitch = 0;
+            target_roll = 0;
         }
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);

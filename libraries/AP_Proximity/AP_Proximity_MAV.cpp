@@ -36,7 +36,7 @@ void AP_Proximity_MAV::update(void)
         set_status(AP_Proximity::Status::Good);
     }
 
-    if (frontend.near_miss_alert && (AP_HAL::millis() - _last_near_miss_ms > 50)) {
+    if (frontend.near_miss_alert && (AP_HAL::millis() - _last_near_miss_ms > 30)) {
         frontend.near_miss_alert = 0;
     }
 }
