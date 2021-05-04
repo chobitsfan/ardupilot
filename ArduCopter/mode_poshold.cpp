@@ -122,8 +122,7 @@ float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
                 alt_diff = fence->get_safe_alt_max() + veh_alt;
                 // do not allow climbing if we've breached the safe altitude
                 if (alt_diff <= 0.0f) {
-                    target_rate = MIN(target_rate, 0.0f);
-                    return target_rate;
+                    return 0;
                 }
                 // limit climb rate
                 float max_speed;
@@ -136,8 +135,7 @@ float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
             } else {
                 alt_diff = fence->get_safe_alt_min() + veh_alt;
                 if (alt_diff >= 0.0f) {
-                    target_rate = MAX(target_rate, 0.0f);
-                    return target_rate;
+                    return 0;
                 }
                 alt_diff = -alt_diff;
                 // limit climb rate
