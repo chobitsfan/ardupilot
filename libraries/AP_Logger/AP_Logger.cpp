@@ -1395,6 +1395,10 @@ bool AP_Logger::log_while_disarmed(void) const
         return true;
     }
 
+    if (!backends[0]->allow_start_ekf()) {
+        return true;
+    }
+
     uint32_t now = AP_HAL::millis();
     uint32_t persist_ms = HAL_LOGGER_ARM_PERSIST*1000U;
 
