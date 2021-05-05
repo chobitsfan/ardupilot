@@ -70,9 +70,12 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
         Vector3f pos_cm;
-        pos_control->get_stopping_point_xy(pos_cm);
-        if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
-            return true;
+        const Vector3f& vel = inertial_nav.get_velocity();
+        if (vel.x * vel.x + vel.y * vel.y > 100.0f) {
+            pos_control->get_stopping_point_xy(pos_cm);
+            if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
+                return true;
+            }
         } else {
             pos_cm = inertial_nav.get_position();
             float fwd = -target_pitch;
