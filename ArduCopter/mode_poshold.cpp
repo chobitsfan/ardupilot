@@ -71,7 +71,7 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
     if (fence && fence->enabled()) {
         Vector3f pos_cm;
         const Vector3f& vel = inertial_nav.get_velocity();
-        if (vel.x * vel.x + vel.y * vel.y > 100.0f) {
+        if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
             pos_control->get_stopping_point_xy(pos_cm);
             if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
                 return true;
@@ -291,9 +291,13 @@ void ModePosHold::run()
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
 
-        if (brake_at_fence(target_pitch, target_roll)) {
+        if (fence_braking) {
             target_pitch = 0;
             target_roll = 0;
+        } else if (brake_at_fence(target_pitch, target_roll)) {
+            target_pitch = 0;
+            target_roll = 0;
+            fence_braking = true;
         }
 
         break;
@@ -522,6 +526,7 @@ void ModePosHold::run()
         // handle combined roll+pitch mode
         switch (roll_mode) {
             case RPMode::BRAKE_TO_LOITER: {
+                fence_braking = false;
                 // reduce brake_to_loiter timer
                 if (brake.to_loiter_timer > 0) {
                     brake.to_loiter_timer--;
@@ -570,6 +575,7 @@ void ModePosHold::run()
                 break;
             }
             case RPMode::LOITER:
+                fence_braking = false;
                 // run loiter controller
                 loiter_nav->update(false);
 

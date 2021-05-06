@@ -1078,6 +1078,8 @@ private:
     float roll;   // final roll angle sent to attitude controller
     float pitch;  // final pitch angle sent to attitude controller
 
+    bool fence_braking;
+
 };
 
 
