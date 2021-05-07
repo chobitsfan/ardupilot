@@ -655,7 +655,9 @@ void AP_Logger::set_vehicle_armed(const bool armed_state)
     }
     _armed = armed_state;
 
-    if (!_armed) {
+    if (_armed) {
+        FOR_EACH_BACKEND(vehicle_armed());
+    } else {
         // went from armed to disarmed
         FOR_EACH_BACKEND(vehicle_was_disarmed());
     }
