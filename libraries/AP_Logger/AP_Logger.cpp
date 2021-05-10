@@ -1396,11 +1396,11 @@ bool AP_Logger::log_while_disarmed(void) const
     if (_params.log_disarmed != 0) {
         return true;
     }
-
+#if CONFIG_HAL_BOARD == HAL_BOARD_CHIBIOS
     if (!backends[0]->allow_start_ekf()) {
         return true;
     }
-
+#endif
     uint32_t now = AP_HAL::millis();
     uint32_t persist_ms = HAL_LOGGER_ARM_PERSIST*1000U;
 
