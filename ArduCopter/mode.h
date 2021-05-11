@@ -1079,7 +1079,7 @@ private:
     float pitch;  // final pitch angle sent to attitude controller
 
     bool fence_braking;
-
+    bool near_miss_acting;
 };
 
 
