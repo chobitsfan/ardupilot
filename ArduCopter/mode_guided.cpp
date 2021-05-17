@@ -105,7 +105,7 @@ bool ModeGuided::do_user_takeoff_start(float takeoff_alt_cm)
 
     // initialise wpnav destination
     Location target_loc = copter.current_loc;
-    Location::AltFrame frame = Location::AltFrame::ABOVE_HOME;
+    Location::AltFrame frame = Location::AltFrame::ABOVE_ORIGIN;
     if (wp_nav->rangefinder_used_and_healthy() &&
             wp_nav->get_terrain_source() == AC_WPNav::TerrainSource::TERRAIN_FROM_RANGEFINDER &&
             takeoff_alt_cm < copter.rangefinder.max_distance_cm_orient(ROTATION_PITCH_270)) {
