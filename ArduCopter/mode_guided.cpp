@@ -113,7 +113,7 @@ bool ModeGuided::allows_arming(AP_Arming::Method method) const
 bool ModeGuided::do_user_takeoff_start(float takeoff_alt_cm)
 {
     // calculate target altitude and frame (either alt-above-ekf-origin or alt-above-terrain)
-    int32_t alt_target_cm;
+    int32_t alt_target_cm = takeoff_alt_cm;
     bool alt_target_terrain = false;
     if (wp_nav->rangefinder_used_and_healthy() &&
         wp_nav->get_terrain_source() == AC_WPNav::TerrainSource::TERRAIN_FROM_RANGEFINDER &&
@@ -125,16 +125,6 @@ bool ModeGuided::do_user_takeoff_start(float takeoff_alt_cm)
         // provide target altitude as alt-above-terrain
         alt_target_cm = takeoff_alt_cm;
         alt_target_terrain = true;
-    } else {
-        // interpret altitude as alt-above-home
-        Location target_loc = copter.current_loc;
-        target_loc.set_alt_cm(takeoff_alt_cm, Location::AltFrame::ABOVE_HOME);
-
-        // provide target altitude as alt-above-ekf-origin
-        if (!target_loc.get_alt_cm(Location::AltFrame::ABOVE_ORIGIN, alt_target_cm)) {
-            // this should never happen but we reject the command just in case
-            return false;
-        }
     }
 
     guided_mode = SubMode::TakeOff;
