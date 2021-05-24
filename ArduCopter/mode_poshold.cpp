@@ -283,19 +283,38 @@ void ModePosHold::run()
         // get avoidance adjusted climb rate
         target_climb_rate = get_fence_adjusted_climbrate(target_climb_rate);
 
-        if (g2.proximity.near_miss_alert) {
-            /*target_climb_rate = 250;
-            if (!near_miss_acting) {
-                pos_control->set_max_speed_z(-250, 250);
-                pos_control->set_max_accel_z(250);
-            }*/
+        if (g2.proximity.get_status() == AP_Proximity::Status::Good) {
             near_miss_acting = true;
-            target_pitch = 2000;
-            //target_roll = 0;
+            int8_t impact_sector = g2.proximity.impact_sector;
+            switch (impact_sector)
+            {
+            case 0:
+            case 1:
+            case 7:
+                target_pitch = 4500;
+                break;
+            case 3:
+            case 4:
+            case 5:
+                target_pitch = -4500;
+                break;
+            }
+            switch (impact_sector)
+            {
+            case 1:
+            case 2:
+            case 3:
+                target_roll = -4500;
+                break;
+            case 5:
+            case 6:
+            case 7:
+                target_roll = 4500;
+                break;
+            }
         } else if (near_miss_acting) {
             near_miss_acting = false;
-            //pos_control->set_max_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
-            //pos_control->set_max_accel_z(g.pilot_accel_z);
+            fence_braking = true;
         }
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);

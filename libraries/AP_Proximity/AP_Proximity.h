@@ -167,7 +167,7 @@ public:
     // set alt as read from downward facing rangefinder. Tilt is already adjusted for
     void set_rangefinder_alt(bool use, bool healthy, float alt_cm);
 
-    int8_t near_miss_alert;
+    int8_t impact_sector;
 
 private:
     static AP_Proximity *_singleton;

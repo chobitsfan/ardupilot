@@ -29,15 +29,11 @@ extern const AP_HAL::HAL& hal;
 void AP_Proximity_MAV::update(void)
 {
     // check for timeout and set health status
-    if ((_last_update_ms == 0 || (AP_HAL::millis() - _last_update_ms > PROXIMITY_MAV_TIMEOUT_MS)) &&
+    if ((_last_update_ms == 0 || (AP_HAL::millis() - _last_update_ms > 40)) &&
         (_last_upward_update_ms == 0 || (AP_HAL::millis() - _last_upward_update_ms > PROXIMITY_MAV_TIMEOUT_MS))) {
         set_status(AP_Proximity::Status::NoData);
     } else {
         set_status(AP_Proximity::Status::Good);
-    }
-
-    if (frontend.near_miss_alert && (AP_HAL::millis() - _last_near_miss_ms > 30)) {
-        frontend.near_miss_alert = 0;
     }
 }
 
@@ -75,9 +71,9 @@ void AP_Proximity_MAV::handle_distance_sensor_msg(const mavlink_message_t &msg)
     mavlink_distance_sensor_t packet;
     mavlink_msg_distance_sensor_decode(&msg, &packet);
 
-    if (packet.orientation == 10) {
-        _last_near_miss_ms = AP_HAL::millis();
-        frontend.near_miss_alert = 1;
+    if (packet.type == 10) {
+        _last_update_ms = AP_HAL::millis();
+        frontend.impact_sector = packet.orientation;
         return;
     }
 

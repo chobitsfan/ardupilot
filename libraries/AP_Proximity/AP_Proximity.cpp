@@ -207,7 +207,6 @@ void AP_Proximity::init(void)
         // initialise status
         state[i].status = Status::NotConnected;
     }
-    near_miss_alert = 0;
 }
 
 // update Proximity state for all instances. This should be called at a high rate by the main loop
