@@ -62,7 +62,6 @@ bool ModePosHold::init(bool ignore_checks)
     // initialise wind_comp each time PosHold is switched on
     init_wind_comp_estimate();
 
-    near_miss_acting = false;
     fence_braking = false;
 
     return true;
@@ -72,15 +71,15 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
 {
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
-        Vector3f pos_cm;
         const Vector3f& vel = inertial_nav.get_velocity();
         if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
+            Vector3f pos_cm;
             pos_control->get_stopping_point_xy(pos_cm);
             if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
                 return true;
             }
         } else {
-            pos_cm = inertial_nav.get_position();
+            const Vector3f& pos_cm = inertial_nav.get_position();
             float fwd = -target_pitch;
             float right = target_roll;
             Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
@@ -284,37 +283,38 @@ void ModePosHold::run()
         target_climb_rate = get_fence_adjusted_climbrate(target_climb_rate);
 
         if (g2.proximity.get_status() == AP_Proximity::Status::Good) {
-            near_miss_acting = true;
-            int8_t impact_sector = g2.proximity.impact_sector;
-            switch (impact_sector)
-            {
-            case 0:
-            case 1:
-            case 7:
-                target_pitch = 4500;
-                break;
-            case 3:
-            case 4:
-            case 5:
-                target_pitch = -4500;
-                break;
+            Vector2f pos_ne;
+            if (ahrs.get_relative_position_NE_origin(pos_ne)) {
+                if ((pos_ne - g2.proximity.impact_point).length_squared() < 0.64f) {
+                    int8_t impact_sector = g2.proximity.impact_sector;
+                    switch (impact_sector)
+                    {
+                    case 0:
+                    case 1:
+                    case 7:
+                        target_pitch = 3000;
+                        break;
+                    case 3:
+                    case 4:
+                    case 5:
+                        target_pitch = -3000;
+                        break;
+                    }
+                    switch (impact_sector)
+                    {
+                    case 1:
+                    case 2:
+                    case 3:
+                        target_roll = -3000;
+                        break;
+                    case 5:
+                    case 6:
+                    case 7:
+                        target_roll = 3000;
+                        break;
+                    }
+                }
             }
-            switch (impact_sector)
-            {
-            case 1:
-            case 2:
-            case 3:
-                target_roll = -4500;
-                break;
-            case 5:
-            case 6:
-            case 7:
-                target_roll = 4500;
-                break;
-            }
-        } else if (near_miss_acting) {
-            near_miss_acting = false;
-            fence_braking = true;
         }
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
