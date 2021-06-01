@@ -1397,7 +1397,7 @@ bool AP_Logger::log_while_disarmed(void) const
         return true;
     }
 #if CONFIG_HAL_BOARD == HAL_BOARD_CHIBIOS
-    if (!backends[0]->allow_start_ekf()) {
+    if ((backends[0] != nullptr) && (!backends[0]->allow_start_ekf())) {
         return true;
     }
 #endif
