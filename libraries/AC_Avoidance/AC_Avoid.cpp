@@ -1495,6 +1495,8 @@ bool AC_Avoid::get_proximity_roll_pitch_pct(float &roll_positive, float &roll_ne
         }
     }
     return adjusted;
+#else
+    return false;
 #endif // HAL_PROXIMITY_ENABLED
 }
 

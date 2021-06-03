@@ -281,7 +281,7 @@ void ModePosHold::run()
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_fence_adjusted_climbrate(target_climb_rate);
-
+#if HAL_PROXIMITY_ENABLED
         if (g2.proximity.get_status() == AP_Proximity::Status::Good) {
             Vector2f pos_ne;
             if (ahrs.get_relative_position_NE_origin(pos_ne)) {
@@ -316,6 +316,7 @@ void ModePosHold::run()
                 }
             }
         }
+#endif
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
 
