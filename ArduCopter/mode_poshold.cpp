@@ -279,7 +279,8 @@ void ModePosHold::run()
 
         pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate, false);
         
-	if (g2.proximity.get_status() == AP_Proximity::Status::Good) {
+#if HAL_PROXIMITY_ENABLED
+        if (g2.proximity.get_status() == AP_Proximity::Status::Good) {
             Vector2f pos_ne;
             if (ahrs.get_relative_position_NE_origin(pos_ne)) {
                 if ((pos_ne - g2.proximity.impact_point).length_squared() < 0.64f) {
@@ -313,6 +314,7 @@ void ModePosHold::run()
                 }
             }
         }
+#endif
 
         if (fence_braking) {
             target_pitch = 0;
