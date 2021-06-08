@@ -29,7 +29,7 @@ bool ModePosHold::init(bool ignore_checks)
 {
     // set vertical speed and acceleration limits
     pos_control->set_max_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
-    pos_control->set_max_accel_xy(100.0f/*POSCONTROL_ACCEL_XY*/);
+    pos_control->set_max_speed_accel_xy(500.0f/*POSCONTROL_SPEED*/, 100.0f/*POSCONTROL_ACCEL_XY*/);
 
     // initialise the vertical position controller
     if (!pos_control->is_active_z()) {
@@ -72,7 +72,7 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
         const Vector3f& vel = inertial_nav.get_velocity();
         if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
             Vector3f pos_cm;
-            pos_control->get_stopping_point_xy(pos_cm);
+            pos_control->get_stopping_point_xy_cm(pos_cm);
             if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
                 return true;
             }
@@ -92,7 +92,7 @@ float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
         float kP = pos_control->get_pos_z_p().kP();
-        float accel_cmss = pos_control->get_max_accel_z();
+        float accel_cmss = pos_control->get_max_accel_z_cmss();
 
         // do not adjust climb_rate if level
         if (is_zero(target_rate)) {
