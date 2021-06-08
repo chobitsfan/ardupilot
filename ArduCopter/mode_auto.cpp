@@ -265,9 +265,15 @@ void ModeAuto::takeoff_start(const Location& dest_loc)
 {
     _mode = SubMode::TAKEOFF;
 
-    const Vector3f& curr_pos = inertial_nav.get_position();
-    // no need to check return status because terrain data is not used
-    wp_nav->set_wp_destination(Vector3f(curr_pos.x, curr_pos.y, dest_loc.alt), false);
+    // calculate current and target altitudes
+    // by default current_alt_cm and alt_target_cm are alt-above-EKF-origin
+    int32_t alt_target_cm = dest_loc.alt;
+    bool alt_target_terrain = false;
+    float current_alt_cm = inertial_nav.get_position_z_up_cm();
+
+     // sanity check target
+    int32_t alt_target_min_cm = current_alt_cm + (copter.ap.land_complete ? 100 : 0);
+    alt_target_cm = MAX(alt_target_cm, alt_target_min_cm);
 
     // initialise yaw
     auto_yaw.set_mode(AUTO_YAW_HOLD);
@@ -1175,19 +1181,15 @@ Location ModeAuto::loc_from_cmd(const AP_Mission::Mission_Command& cmd, const Lo
 // do_nav_wp - initiate move to next waypoint
 void ModeAuto::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
+    _mode = SubMode::WP;
+
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;
     // this is the delay, stored in seconds
     loiter_time_max = cmd.p1;
 
     // Set wp navigation target
-    _mode = Auto_WP;
     wp_nav->set_wp_destination(Vector3f(cmd.content.location.lat, cmd.content.location.lng, cmd.content.location.alt), false);
-    // initialise yaw
-    // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
-    if (auto_yaw.mode() != AUTO_YAW_ROI) {
-        auto_yaw.set_mode_to_default(false);
-    }
 
     // initialise yaw
     // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
