@@ -1101,19 +1101,15 @@ Location ModeAuto::loc_from_cmd(const AP_Mission::Mission_Command& cmd, const Lo
 // do_nav_wp - initiate move to next waypoint
 void ModeAuto::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
+    _mode = SubMode::WP;
+
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;
     // this is the delay, stored in seconds
     loiter_time_max = cmd.p1;
 
     // Set wp navigation target
-    _mode = Auto_WP;
     wp_nav->set_wp_destination(Vector3f(cmd.content.location.lat, cmd.content.location.lng, cmd.content.location.alt), false);
-    // initialise yaw
-    // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
-    if (auto_yaw.mode() != AUTO_YAW_ROI) {
-        auto_yaw.set_mode_to_default(false);
-    }
 
     // initialise yaw
     // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
