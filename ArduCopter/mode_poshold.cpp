@@ -68,15 +68,15 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
 {
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
-        const Vector3f& vel = inertial_nav.get_velocity();
+        const Vector3f& vel = inertial_nav.get_velocity_neu_cms();
         if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
-            Vector3f pos_cm;
-            pos_control->get_stopping_point_xy(pos_cm);
-            if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
+            Vector2p pos_cm;
+            pos_control->get_stopping_point_xy_cm(pos_cm);
+            if (fence->polyfence().breached(pos_cm.tofloat())) {
                 return true;
             }
         } else {
-            const Vector3f& pos_cm = inertial_nav.get_position();
+            const Vector3f& pos_cm = inertial_nav.get_position_neu_cm();
             float fwd = -target_pitch;
             float right = target_roll;
             Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
@@ -91,7 +91,7 @@ float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
         float kP = pos_control->get_pos_z_p().kP();
-        float accel_cmss = pos_control->get_max_accel_z();
+        float accel_cmss = pos_control->get_max_accel_z_cmss();
 
         // do not adjust climb_rate if level
         if (is_zero(target_rate)) {
