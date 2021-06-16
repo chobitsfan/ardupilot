@@ -107,6 +107,8 @@ public:
     // returns true if the destination is within fence (used to reject waypoints outside the fence)
     bool check_destination_within_fence(const Location& loc);
 
+    bool check_destination_within_fence(const Vector3f& destination);
+
     /// get_breaches - returns bit mask of the fence types that have been breached
     uint8_t get_breaches() const { return _breached_fences; }
 
