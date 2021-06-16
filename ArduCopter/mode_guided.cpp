@@ -231,8 +231,7 @@ bool ModeGuided::set_destination(const Vector3f& destination, bool use_yaw, floa
 {
 #if AC_FENCE == ENABLED
     // reject destination if outside the fence
-    const Location dest_loc(destination, terrain_alt ? Location::AltFrame::ABOVE_TERRAIN : Location::AltFrame::ABOVE_ORIGIN);
-    if (!copter.fence.check_destination_within_fence(dest_loc)) {
+    if (!copter.fence.check_destination_within_fence(destination)) {
         AP::logger().Write_Error(LogErrorSubsystem::NAVIGATION, LogErrorCode::DEST_OUTSIDE_FENCE);
         // failure is propagated to GCS with NAK
         return false;
@@ -330,8 +329,7 @@ bool ModeGuided::set_destination_posvel(const Vector3f& destination, const Vecto
 {
 #if AC_FENCE == ENABLED
     // reject destination if outside the fence
-    const Location dest_loc(destination, Location::AltFrame::ABOVE_ORIGIN);
-    if (!copter.fence.check_destination_within_fence(dest_loc)) {
+    if (!copter.fence.check_destination_within_fence(destination)) {
         AP::logger().Write_Error(LogErrorSubsystem::NAVIGATION, LogErrorCode::DEST_OUTSIDE_FENCE);
         // failure is propagated to GCS with NAK
         return false;
