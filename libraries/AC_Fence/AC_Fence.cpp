@@ -555,6 +555,17 @@ uint8_t AC_Fence::check()
     return ret;
 }
 
+bool AC_Fence::check_destination_within_fence(const Vector3f& destination) {
+    // polygon fence check
+    if ((get_enabled_fences() & AC_FENCE_TYPE_POLYGON)) {
+        if (_poly_loader.breached(Vector2f(destination.x, destination.y))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // returns true if the destination is within fence (used to reject waypoints outside the fence)
 bool AC_Fence::check_destination_within_fence(const Location& loc)
 {

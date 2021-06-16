@@ -195,12 +195,14 @@ bool AC_PolyFence_loader::load_point_from_eeprom(uint16_t i, Vector2l& point) co
 
 bool AC_PolyFence_loader::breached() const
 {
-    struct Location loc;
-    if (!AP::ahrs().get_position(loc)) {
+    Vector2f position;
+    if (!AP::ahrs().get_relative_position_NE_origin(position)) {
+        // we have no idea where we are; can't breach the fence
         return false;
     }
 
-    return breached(loc);
+    position = position * 100.0f;  // m to cm
+    return breached(position);
 }
 
 // check if a position (expressed as lat/lng) is within the boundary
