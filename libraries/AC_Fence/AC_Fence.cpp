@@ -556,6 +556,12 @@ uint8_t AC_Fence::check()
 }
 
 bool AC_Fence::check_destination_within_fence(const Vector3f& destination) {
+    if ((get_enabled_fences() & AC_FENCE_TYPE_ALT_MAX)) {
+        if (destination.z > (_alt_max * 100.0f)) {
+            return false;
+        }
+    }
+
     // polygon fence check
     if ((get_enabled_fences() & AC_FENCE_TYPE_POLYGON)) {
         if (_poly_loader.breached(Vector2f(destination.x, destination.y))) {
