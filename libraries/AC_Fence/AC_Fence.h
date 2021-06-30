@@ -131,6 +131,10 @@ public:
     /// get_safe_alt_min - returns the minimum safe altitude (i.e. alt_min + margin)
     float get_safe_alt_min() const { return _alt_min + _margin; }
 
+    float get_alt_max() const { return _alt_max; }
+
+    float get_alt_min() const { return _alt_min; }
+
     /// get_radius - returns the fence radius in meters
     float get_radius() const { return _circle_radius.get(); }
 
