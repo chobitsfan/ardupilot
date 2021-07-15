@@ -72,9 +72,9 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
     if (fence && fence->enabled()) {
         const Vector3f& vel = inertial_nav.get_velocity();
         if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
-            Vector3f pos_cm;
+            Vector2p pos_cm;
             pos_control->get_stopping_point_xy_cm(pos_cm);
-            if (fence->polyfence().breached(Vector2f(pos_cm.x, pos_cm.y))) {
+            if (fence->polyfence().breached(pos_cm.tofloat())) {
                 return true;
             }
         } else {
