@@ -206,7 +206,6 @@ const AP_Param::GroupInfo AP_OSD::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("_W_RESTVOLT", 26, AP_OSD, warn_restvolt, 10.0f),
 
-#endif //osd enabled
 #if OSD_PARAM_ENABLED
     // @Group: 5_
     // @Path: AP_OSD_ParamScreen.cpp
@@ -222,6 +221,7 @@ const AP_Param::GroupInfo AP_OSD::var_info[] = {
     AP_SUBGROUPINFO2(screen[1], "2_", 28, AP_OSD, AP_OSD_Screen),
     AP_SUBGROUPINFO2(screen[2], "3_", 29, AP_OSD, AP_OSD_Screen),
     AP_SUBGROUPINFO2(screen[3], "4_", 30, AP_OSD, AP_OSD_Screen),
+#endif //osd enabled
 
     AP_GROUPEND
 };
