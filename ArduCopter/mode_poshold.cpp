@@ -218,7 +218,7 @@ void ModePosHold::run()
                     brake.angle_max_roll = fabsf(brake.roll);
                 } else {
                     // braking angle has started decreasing so re-estimate braking time
-                    brake.timeout_roll = 1+(uint16_t)(LOOP_RATE_FACTOR*15L*(int32_t)(fabsf(brake.roll))/(10L*(int32_t)g.poshold_brake_rate));  // the 1.2 (12/10) factor has to be tuned in flight, here it means 120% of the "normal" time.
+                    brake.timeout_roll = 1+(uint16_t)(fabsf(brake.roll)/g.poshold_brake_rate*1.5f*100*LOOP_RATE_FACTOR);  // the 1.5 factor has to be tuned in flight, here it means 150% of the "normal" time.
                     brake.time_updated_roll = true;
                 }
             }
@@ -312,7 +312,7 @@ void ModePosHold::run()
                     brake.angle_max_pitch = fabsf(brake.pitch);
                 } else {
                     // braking angle has started decreasing so re-estimate braking time
-                    brake.timeout_pitch = 1+(uint16_t)(LOOP_RATE_FACTOR*15L*(int32_t)(fabsf(brake.pitch))/(10L*(int32_t)g.poshold_brake_rate));  // the 1.2 (12/10) factor has to be tuned in flight, here it means 120% of the "normal" time.
+                    brake.timeout_pitch = 1+(uint16_t)(fabsf(brake.pitch)/g.poshold_brake_rate*1.5f*100*LOOP_RATE_FACTOR);  // the 1.5 factor has to be tuned in flight, here it means 150% of the "normal" time.
                     brake.time_updated_pitch = true;
                 }
             }
@@ -503,12 +503,12 @@ void ModePosHold::update_pilot_lean_angle(float &lean_angle_filtered, float &lea
         // lean_angle_raw must be pulling lean_angle_filtered towards zero, smooth the decrease
         if (lean_angle_filtered > 0) {
             // reduce the filtered lean angle at 5% or the brake rate (whichever is faster).
-            lean_angle_filtered -= MAX((float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(1, g.poshold_brake_rate/LOOP_RATE_FACTOR));
+            lean_angle_filtered -= MAX((float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(100.0f, g.poshold_brake_rate);
             // do not let the filtered angle fall below the pilot's input lean angle.
             // the above line pulls the filtered angle down and the below line acts as a catch
             lean_angle_filtered = MAX(lean_angle_filtered, lean_angle_raw);
         }else{
-            lean_angle_filtered += MAX(-(float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(1, g.poshold_brake_rate/LOOP_RATE_FACTOR));
+            lean_angle_filtered += MAX(-(float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(100.0f, g.poshold_brake_rate);
             lean_angle_filtered = MIN(lean_angle_filtered, lean_angle_raw);
         }
     }
@@ -528,12 +528,6 @@ float ModePosHold::mix_controls(float mix_ratio, float first_control, float seco
 void ModePosHold::update_brake_angle_from_velocity(float &brake_angle, float velocity)
 {
     float lean_angle;
-    float brake_rate = g.poshold_brake_rate;
-
-    brake_rate /= 4.0f;
-    if (brake_rate <= 1.0f) {
-        brake_rate = 1.0f;
-    }
 
     // calculate velocity-only based lean angle
     if (velocity >= 0) {
@@ -543,7 +537,7 @@ void ModePosHold::update_brake_angle_from_velocity(float &brake_angle, float vel
     }
 
     // do not let lean_angle be too far from brake_angle
-    brake_angle = constrain_float(lean_angle, brake_angle - brake_rate, brake_angle + brake_rate);
+    brake_angle = constrain_float(lean_angle, brake_angle - (float)g.poshold_brake_rate, brake_angle + (float)g.poshold_brake_rate);
 
     // constrain final brake_angle
     brake_angle = constrain_float(brake_angle, -(float)g.poshold_brake_angle_max, (float)g.poshold_brake_angle_max);

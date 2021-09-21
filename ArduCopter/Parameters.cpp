@@ -371,9 +371,9 @@ const AP_Param::Info Copter::var_info[] = {
 #if MODE_POSHOLD_ENABLED == ENABLED
     // @Param: PHLD_BRAKE_RATE
     // @DisplayName: PosHold braking rate
-    // @Description: PosHold flight mode's rotation rate during braking in deg/sec
-    // @Units: deg/s
-    // @Range: 4 12
+    // @Description: PosHold flight mode's rotation rate during braking in centi-deg/sec
+    // @Units: cdeg/s
+    // @Range: 400 1200
     // @User: Advanced
     GSCALAR(poshold_brake_rate, "PHLD_BRAKE_RATE",  POSHOLD_BRAKE_RATE_DEFAULT),
 

@@ -553,7 +553,7 @@
 // PosHold parameter defaults
 //
 #ifndef POSHOLD_BRAKE_RATE_DEFAULT
- # define POSHOLD_BRAKE_RATE_DEFAULT    8       // default POSHOLD_BRAKE_RATE param value.  Rotation rate during braking in deg/sec
+ # define POSHOLD_BRAKE_RATE_DEFAULT    800       // default POSHOLD_BRAKE_RATE param value.  Rotation rate during braking in centi-deg/sec
 #endif
 #ifndef POSHOLD_BRAKE_ANGLE_DEFAULT
  # define POSHOLD_BRAKE_ANGLE_DEFAULT   3000    // default POSHOLD_BRAKE_ANGLE param value.  Max lean angle during braking in centi-degrees
