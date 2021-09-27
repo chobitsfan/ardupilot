@@ -358,6 +358,7 @@ void ModePosHold::run()
                 brake.angle_max_roll = 0.0f;        // reset brake_angle_max so we can detect when vehicle begins to flatten out during braking
                 brake.timeout_roll = POSHOLD_BRAKE_TIME_ESTIMATE_MAX; // number of cycles the brake will be applied, updated during braking mode.
                 brake.time_updated_roll = false;   // flag the braking time can be re-estimated
+                brake.timeout_roll_override = 40;
             }
 
             // final lean angle should be pilot input plus wind compensation
@@ -399,10 +400,14 @@ void ModePosHold::run()
             // final lean angle is braking angle + wind compensation angle
             roll = brake.roll + wind_comp_roll;
 
+            if (brake.timeout_roll_override > 0) {
+                brake.timeout_roll_override--;
+            } else {
             // check for pilot input
             if (!is_zero(target_roll)) {
                 // init transition to pilot override
                 roll_controller_to_pilot_override();
+            }
             }
             break;
 
@@ -452,6 +457,8 @@ void ModePosHold::run()
                 brake.angle_max_pitch = 0.0f;       // reset brake_angle_max so we can detect when vehicle begins to flatten out during braking
                 brake.timeout_pitch = POSHOLD_BRAKE_TIME_ESTIMATE_MAX; // number of cycles the brake will be applied, updated during braking mode.
                 brake.time_updated_pitch = false;   // flag the braking time can be re-estimated
+                brake.timeout_pitch_override = 40;
+                //if (poshold_state == AltHold_Flying) gcs().send_text(MAV_SEVERITY_INFO, "brake start");
             }
 
             // final lean angle should be pilot input plus wind compensation
@@ -493,10 +500,14 @@ void ModePosHold::run()
             // final lean angle is braking angle + wind compensation angle
             pitch = brake.pitch + wind_comp_pitch;
 
+            if (brake.timeout_pitch_override > 0) {
+                brake.timeout_pitch_override--;
+            } else {
             // check for pilot input
             if (!is_zero(target_pitch)) {
                 // init transition to pilot override
                 pitch_controller_to_pilot_override();
+                }
             }
             break;
 
@@ -663,12 +674,12 @@ void ModePosHold::update_pilot_lean_angle(float &lean_angle_filtered, float &lea
         // lean_angle_raw must be pulling lean_angle_filtered towards zero, smooth the decrease
         if (lean_angle_filtered > 0) {
             // reduce the filtered lean angle at 5% or the brake rate (whichever is faster).
-            lean_angle_filtered -= MAX((float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(1, g.poshold_brake_rate/LOOP_RATE_FACTOR));
+            lean_angle_filtered -= MAX((float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(1.0f, g.poshold_brake_rate/(float)LOOP_RATE_FACTOR));
             // do not let the filtered angle fall below the pilot's input lean angle.
             // the above line pulls the filtered angle down and the below line acts as a catch
             lean_angle_filtered = MAX(lean_angle_filtered, lean_angle_raw);
         }else{
-            lean_angle_filtered += MAX(-(float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(1, g.poshold_brake_rate/LOOP_RATE_FACTOR));
+            lean_angle_filtered += MAX(-(float)lean_angle_filtered * POSHOLD_SMOOTH_RATE_FACTOR, MAX(1.0f, g.poshold_brake_rate/(float)LOOP_RATE_FACTOR));
             lean_angle_filtered = MIN(lean_angle_filtered, lean_angle_raw);
         }
     }
@@ -690,8 +701,8 @@ void ModePosHold::update_brake_angle_from_velocity(float &brake_angle, float vel
     float lean_angle;
     float brake_rate = g.poshold_brake_rate;
 
-    brake_rate /= 4.0f;
-    if (brake_rate <= 1.0f) {
+    brake_rate /= LOOP_RATE_FACTOR;
+    if (brake_rate < 1.0f) {
         brake_rate = 1.0f;
     }
 
@@ -790,6 +801,7 @@ void ModePosHold::roll_controller_to_pilot_override()
 // pitch_controller_to_pilot_override - initialises transition from a controller submode (brake or loiter) to a pilot override on roll axis
 void ModePosHold::pitch_controller_to_pilot_override()
 {
+    //gcs().send_text(MAV_SEVERITY_INFO, "override %d", (int)pitch_mode);
     pitch_mode = RPMode::CONTROLLER_TO_PILOT_OVERRIDE;
     controller_to_pilot_timer_pitch = POSHOLD_CONTROLLER_TO_PILOT_MIX_TIMER;
     // initialise pilot_pitch to 0, wind_comp will be updated to compensate and update_pilot_lean_angle function shall not smooth this transition at next iteration. so 0 is the right value
