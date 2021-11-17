@@ -55,8 +55,7 @@ bool AP_RangeFinder_MaxsonarSerialLV::get_reading(uint16_t &reading_cm)
         return false;
     }
 
-    // This sonar gives the metrics in inches, so we have to transform this to centimeters
-    reading_cm = 2.54f * sum / count;
+    reading_cm = sum / count;
 
     return true;
 }
