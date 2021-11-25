@@ -4,7 +4,7 @@
 // valid! You should switch to using a HAL_BOARD flag in your local config.mk.
 
 // uncomment the lines below to disable features (flash sizes listed are for APM2 boards and will underestimate savings on Pixhawk and other boards)
-//#define LOGGING_ENABLED       DISABLED            // disable logging to save 11K of flash space
+#define LOGGING_ENABLED       DISABLED            // disable logging to save 11K of flash space
 #define MOUNT                 DISABLED            // disable the camera gimbal to save 8K of flash space
 #define AUTOTUNE_ENABLED      DISABLED            // disable the auto tune functionality to save 7k of flash
 //#define AC_FENCE              DISABLED            // disable fence to save 2k of flash
@@ -25,7 +25,7 @@
 #define RPM_ENABLED           DISABLED            // disable rotations per minute sensor support
 #define STATS_ENABLED         DISABLED            // disable statistics support
 #define MODE_ACRO_ENABLED     DISABLED            // disable acrobatic mode support
-//#define MODE_AUTO_ENABLED     DISABLED            // disable auto mode support
+#define MODE_AUTO_ENABLED     DISABLED            // disable auto mode support
 //#define MODE_BRAKE_ENABLED    DISABLED            // disable brake mode support
 //#define MODE_CIRCLE_ENABLED   DISABLED            // disable circle mode support
 #define MODE_DRIFT_ENABLED    DISABLED            // disable drift mode support
