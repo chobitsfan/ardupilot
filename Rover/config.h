@@ -10,6 +10,10 @@
   #define ARM_DELAY_MS  2000
 #endif
 
+#define FRSKY_TELEM_ENABLED 0
+#define CAMERA 0
+#define GRIPPER_ENABLED 0
+
 //////////////////////////////////////////////////////////////////////////////
 // FrSky telemetry support
 //
