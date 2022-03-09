@@ -1205,6 +1205,8 @@ private:
         float angle_max_roll;               // maximum lean angle achieved during braking.  Used to determine when the vehicle has begun to flatten out so that we can re-estimate the braking time
         float angle_max_pitch;              // maximum lean angle achieved during braking  Used to determine when the vehicle has begun to flatten out so that we can re-estimate the braking time
         int16_t to_loiter_timer;            // cycles to mix brake and loiter controls in POSHOLD_TO_LOITER
+        int16_t timeout_pitch_override;
+        int16_t timeout_roll_override;
     } brake;
 
     // loiter related variables
