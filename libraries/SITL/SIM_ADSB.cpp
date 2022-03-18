@@ -43,8 +43,10 @@ void ADSB_Vehicle::update(float delta_t)
         initialised = true;
         ICAO_address = (uint32_t)(rand() % 10000);
         snprintf(callsign, sizeof(callsign), "SIM%u", ICAO_address);
-        position.x = Aircraft::rand_normal(0, _sitl->adsb_radius_m);
-        position.y = Aircraft::rand_normal(0, _sitl->adsb_radius_m);
+        //position.x = Aircraft::rand_normal(0, _sitl->adsb_radius_m);
+        //position.y = Aircraft::rand_normal(0, _sitl->adsb_radius_m);
+        position.x = 250.0f;
+        position.y = 0;
         position.z = -fabsf(_sitl->adsb_altitude_m);
 
         double vel_min = 5, vel_max = 20;
@@ -62,11 +64,15 @@ void ADSB_Vehicle::update(float delta_t)
             velocity_ef.zero();
         } else {
             stationary_object_created_ms = 0;
-            velocity_ef.x = Aircraft::rand_normal(vel_min, vel_max);
-            velocity_ef.y = Aircraft::rand_normal(vel_min, vel_max);
-            if (type < ADSB_EMITTER_TYPE_EMERGENCY_SURFACE) {
+            Vector2f to_origin = Vector2f(-position.x,-position.y);
+            to_origin.normalize();
+            to_origin = to_origin * 10.0f;
+            velocity_ef.x = to_origin.x;
+            velocity_ef.y = to_origin.y;
+            velocity_ef.z = -2.0f;
+            /*if (type < ADSB_EMITTER_TYPE_EMERGENCY_SURFACE) {
                 velocity_ef.z = Aircraft::rand_normal(-3, 3);
-            }
+            }*/
         }
     } else if (stationary_object_created_ms > 0 && AP_HAL::millis64() - stationary_object_created_ms > AP_MSEC_PER_HOUR) {
         // regenerate stationary objects so we don't randomly fill up the screen with them over time
@@ -204,9 +210,18 @@ void ADSB::send_report(const class Aircraft &aircraft)
             if (home.get_distance(loc) > _sitl->adsb_radius_m) {
                 vehicle.initialised = false;
             }
-            
+
             mavlink_adsb_vehicle_t adsb_vehicle {};
             last_report_us = now_us;
+
+            mavlink_global_position_int_t global_pos {};
+            global_pos.time_boot_ms = AP_HAL::millis();
+            global_pos.lat = loc.lat;
+            global_pos.lon = loc.lng;
+            global_pos.alt = -vehicle.position.z * 1000;
+            global_pos.vx = vehicle.velocity_ef.x * 100;
+            global_pos.vy = vehicle.velocity_ef.y * 100;
+            global_pos.vz = vehicle.velocity_ef.z * 100;
 
             adsb_vehicle.ICAO_address = vehicle.ICAO_address;
             adsb_vehicle.lat = loc.lat;
@@ -233,18 +248,33 @@ void ADSB::send_report(const class Aircraft &aircraft)
 
             adsb_vehicle.squawk = 1200;
 
-            mavlink_status_t *chan0_status = mavlink_get_channel_status(MAVLINK_COMM_0);
-            uint8_t saved_seq = chan0_status->current_tx_seq;
-            chan0_status->current_tx_seq = mavlink.seq;
-            len = mavlink_msg_adsb_vehicle_encode(vehicle_system_id,
-                                                  MAV_COMP_ID_ADSB,
-                                                  &msg, &adsb_vehicle);
-            chan0_status->current_tx_seq = saved_seq;
-            
-            uint8_t msgbuf[len];
-            len = mavlink_msg_to_send_buffer(msgbuf, &msg);
-            if (len > 0) {
-                write_to_autopilot((char*)msgbuf, len);
+            {
+                mavlink_status_t *chan0_status = mavlink_get_channel_status(MAVLINK_COMM_0);
+                uint8_t saved_seq = chan0_status->current_tx_seq;
+                chan0_status->current_tx_seq = mavlink.seq;
+                len = mavlink_msg_adsb_vehicle_encode(vehicle_system_id,
+                                                    MAV_COMP_ID_ADSB,
+                                                    &msg, &adsb_vehicle);
+                chan0_status->current_tx_seq = saved_seq;
+                
+                uint8_t msgbuf[len];
+                len = mavlink_msg_to_send_buffer(msgbuf, &msg);
+                if (len > 0) {
+                    write_to_autopilot((char*)msgbuf, len);
+                }
+            }
+
+            {
+                mavlink_status_t *chan0_status = mavlink_get_channel_status(MAVLINK_COMM_0);
+                uint8_t saved_seq = chan0_status->current_tx_seq;
+                chan0_status->current_tx_seq = mavlink.seq;
+                len = mavlink_msg_global_position_int_encode(5, 0, &msg, &global_pos);
+                chan0_status->current_tx_seq = saved_seq;
+                uint8_t msgbuf[len];
+                len = mavlink_msg_to_send_buffer(msgbuf, &msg);
+                if (len > 0) {
+                    write_to_autopilot((char*)msgbuf, len);
+                }
             }
         }
     }
