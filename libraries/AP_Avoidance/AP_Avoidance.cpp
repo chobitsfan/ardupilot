@@ -7,6 +7,7 @@ extern const AP_HAL::HAL& hal;
 #include <limits>
 #include <AP_AHRS/AP_AHRS.h>
 #include <GCS_MAVLink/GCS.h>
+#include <AP_Logger/AP_Logger.h>
 
 #define AVOIDANCE_DEBUGGING 0
 
@@ -609,6 +610,19 @@ void AP_Avoidance::handle_msg(const mavlink_message_t &msg)
                  msg.sysid,
                  loc,
                  vel);
+    struct log_ADSB pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_ADSB_MSG),
+        time_us       : AP_HAL::micros64(),
+        ICAO_address  : 0,
+        lat           : packet.lat,
+        lng           : packet.lon,
+        alt           : packet.alt,
+        heading       : packet.hdg,
+        hor_velocity  : (uint16_t)sqrtf(packet.vx*packet.vx+packet.vy*packet.vy),
+        ver_velocity  : (int16_t)(-packet.vz),
+        squawk        : 0,
+    };
+    AP::logger().WriteBlock(&pkt, sizeof(pkt));
 }
 
 // get unit vector away from the nearest obstacle
