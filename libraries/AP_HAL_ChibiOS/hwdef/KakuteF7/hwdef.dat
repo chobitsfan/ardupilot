@@ -141,10 +141,10 @@ define HAL_BOARD_LOG_DIRECTORY "/APM/LOGS"
 define HAL_BOARD_TERRAIN_DIRECTORY "/APM/TERRAIN"
 
 # setup for OSD
-define OSD_ENABLED 1
+define OSD_ENABLED 0
 define OSD_PARAM_ENABLED 0
-define HAL_OSD_TYPE_DEFAULT 1
-ROMFS_WILDCARD libraries/AP_OSD/fonts/font*.bin
+define HAL_OSD_TYPE_DEFAULT 0
+#ROMFS_WILDCARD libraries/AP_OSD/fonts/font*.bin
 
 define STM32_PWM_USE_ADVANCED TRUE
 
@@ -157,8 +157,15 @@ define HAL_PARACHUTE_ENABLED 0
 define HAL_SPRAYER_ENABLED 0
 
 # save FLASH, but leave above when flash issue is fixed
-define HAL_MINIMIZE_FEATURES 1
+define HAL_MINIMIZE_FEATURES 0
 
+define HAL_VISUALODOM_ENABLED 1
+define HAL_ADSB_ENABLED 1
+define AP_OPTICALFLOW_ENABLED 0
+define TOY_MODE_ENABLED 0
+define HAL_GENERATOR_ENABLED 0
+define AP_OPTICALFLOW_ENABLED 0
+define AP_TERRAIN_AVAILABLE 0
 
 # reduce max size of embedded params for apj_tool.py
 define AP_PARAM_MAX_EMBEDDED_PARAM 1024
