@@ -195,7 +195,7 @@ bool AP_Avoidance::check_startup()
 void AP_Avoidance::add_obstacle(const uint32_t obstacle_timestamp_ms,
                                 const MAV_COLLISION_SRC src,
                                 const uint32_t src_id,
-                                const Location &loc,
+                                const Vector3f &pos_ned,
                                 const Vector3f &vel_ned)
 {
     if (! check_startup()) {
@@ -236,25 +236,9 @@ void AP_Avoidance::add_obstacle(const uint32_t obstacle_timestamp_ms,
         _obstacles[index].src_id = src_id;
     }
 
-    _obstacles[index]._location = loc;
+    _obstacles[index]._pos_ned = pos_ned;
     _obstacles[index]._velocity = vel_ned;
     _obstacles[index].timestamp_ms = obstacle_timestamp_ms;
-}
-
-void AP_Avoidance::add_obstacle(const uint32_t obstacle_timestamp_ms,
-                                const MAV_COLLISION_SRC src,
-                                const uint32_t src_id,
-                                const Location &loc,
-                                const float cog,
-                                const float hspeed,
-                                const float vspeed)
-{
-    Vector3f vel;
-    vel[0] = hspeed * cosf(radians(cog));
-    vel[1] = hspeed * sinf(radians(cog));
-    vel[2] = vspeed;
-    // debug("cog=%f hspeed=%f veln=%f vele=%f", cog, hspeed, vel[0], vel[1]);
-    return add_obstacle(obstacle_timestamp_ms, src, src_id, loc, vel);
 }
 
 uint32_t AP_Avoidance::src_id_for_adsb_vehicle(const AP_ADSB::adsb_vehicle_t &vehicle) const
@@ -263,31 +247,15 @@ uint32_t AP_Avoidance::src_id_for_adsb_vehicle(const AP_ADSB::adsb_vehicle_t &ve
     return vehicle.info.ICAO_address;
 }
 
-void AP_Avoidance::get_adsb_samples()
-{
-    AP_ADSB::adsb_vehicle_t vehicle;
-    while (_adsb.next_sample(vehicle)) {
-        uint32_t src_id = src_id_for_adsb_vehicle(vehicle);
-        Location loc = _adsb.get_location(vehicle);
-        add_obstacle(vehicle.last_update_ms,
-                   MAV_COLLISION_SRC_ADSB,
-                   src_id,
-                   loc,
-                   vehicle.info.heading * 0.01,
-                   vehicle.info.hor_velocity * 0.01,
-                   -vehicle.info.ver_velocity * 0.01); // convert cm-up to m-down
-    }
-}
-
-float closest_approach_xy(const Location &my_loc,
+float closest_approach_xy(const Vector3f &my_pos,
                           const Vector3f &my_vel,
-                          const Location &obstacle_loc,
+                          const Vector3f &obstacle_pos,
                           const Vector3f &obstacle_vel,
                           const uint8_t time_horizon)
 {
 
     Vector2f delta_vel_ne = Vector2f(obstacle_vel[0] - my_vel[0], obstacle_vel[1] - my_vel[1]);
-    const Vector2f delta_pos_ne = obstacle_loc.get_distance_NE(my_loc);
+    const Vector2f delta_pos_ne = Vector2f(my_pos.x - obstacle_pos.x, my_pos.y - obstacle_pos.y);
 
     Vector2f line_segment_ne = delta_vel_ne * time_horizon;
 
@@ -305,15 +273,15 @@ float closest_approach_xy(const Location &my_loc,
 }
 
 // returns the closest these objects will get in the body z axis (in metres)
-float closest_approach_z(const Location &my_loc,
+float closest_approach_z(const Vector3f &my_pos,
                          const Vector3f &my_vel,
-                         const Location &obstacle_loc,
+                         const Vector3f &obstacle_pos,
                          const Vector3f &obstacle_vel,
                          const uint8_t time_horizon)
 {
 
     float delta_vel_d = obstacle_vel[2] - my_vel[2]; //down vel diff from us to obstacle
-    float delta_pos_d = (my_loc.alt - obstacle_loc.alt) * 0.01f; //down pos diff from us to obstacle. location.alt has the units of cm and up positive
+    float delta_pos_d = obstacle_pos.z - my_pos.z; //down pos diff from us to obstacle.
 
     float ret;
     if (delta_pos_d >= 0 && delta_vel_d >= 0) { //obstacle is lower than us and move away from us
@@ -332,22 +300,22 @@ float closest_approach_z(const Location &my_loc,
     return ret;
 }
 
-void AP_Avoidance::update_threat_level(const Location &my_loc,
+void AP_Avoidance::update_threat_level(const Vector3f &my_pos,
                                        const Vector3f &my_vel,
                                        AP_Avoidance::Obstacle &obstacle)
 {
 
-    Location &obstacle_loc = obstacle._location;
+    Vector3f &obstacle_pos = obstacle._pos_ned;
     Vector3f &obstacle_vel = obstacle._velocity;
 
     obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_NONE;
 
     const uint32_t obstacle_age = AP_HAL::millis() - obstacle.timestamp_ms;
-    float closest_xy = closest_approach_xy(my_loc, my_vel, obstacle_loc, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
+    float closest_xy = closest_approach_xy(my_pos, my_vel, obstacle_pos, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
     if (closest_xy < _fail_distance_xy) {
         obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_HIGH;
     } else {
-        closest_xy = closest_approach_xy(my_loc, my_vel, obstacle_loc, obstacle_vel, _warn_time_horizon + obstacle_age/1000);
+        closest_xy = closest_approach_xy(my_pos, my_vel, obstacle_pos, obstacle_vel, _warn_time_horizon + obstacle_age/1000);
         if (closest_xy < _warn_distance_xy) {
             obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_LOW;
         }
@@ -355,12 +323,12 @@ void AP_Avoidance::update_threat_level(const Location &my_loc,
 
     // check for vertical separation; our threat level is the minimum
     // of vertical and horizontal threat levels
-    float closest_z = closest_approach_z(my_loc, my_vel, obstacle_loc, obstacle_vel, _warn_time_horizon + obstacle_age/1000);
+    float closest_z = closest_approach_z(my_pos, my_vel, obstacle_pos, obstacle_vel, _warn_time_horizon + obstacle_age/1000);
     if (obstacle.threat_level != MAV_COLLISION_THREAT_LEVEL_NONE) {
         if (closest_z > _warn_distance_z) {
             obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_NONE;
         } else {
-            closest_z = closest_approach_z(my_loc, my_vel, obstacle_loc, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
+            closest_z = closest_approach_z(my_pos, my_vel, obstacle_pos, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
             if (closest_z > _fail_distance_z) {
                 obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_LOW;
             }
@@ -376,7 +344,7 @@ void AP_Avoidance::update_threat_level(const Location &my_loc,
     // level is none - but only *once the GCS has been informed*!
     obstacle.closest_approach_xy = closest_xy;
     obstacle.closest_approach_z = closest_z;
-    float current_distance = my_loc.get_distance(obstacle_loc);
+    float current_distance = (my_pos - obstacle_pos).length();
     obstacle.distance_to_closest_approach = current_distance - closest_xy;
     Vector2f net_velocity_ne = Vector2f(my_vel[0] - obstacle_vel[0], my_vel[1] - obstacle_vel[1]);
     obstacle.time_to_closest_approach = 0.0f;
@@ -457,8 +425,8 @@ void AP_Avoidance::check_for_threats()
 {
     const AP_AHRS &_ahrs = AP::ahrs();
 
-    Location my_loc;
-    if (!_ahrs.get_location(my_loc)) {
+    Vector3f my_pos;
+    if (!_ahrs.get_relative_position_NED_origin(my_pos)) {
         // if we don't know our own location we can't determine any threat level
         return;
     }
@@ -481,7 +449,7 @@ void AP_Avoidance::check_for_threats()
         const uint32_t obstacle_age = AP_HAL::millis() - obstacle.timestamp_ms;
         debug("i=%d src_id=%d timestamp=%u age=%d", i, obstacle.src_id, obstacle.timestamp_ms, obstacle_age);
 
-        update_threat_level(my_loc, my_vel, obstacle);
+        update_threat_level(my_pos, my_vel, obstacle);
         debug("   threat-level=%d", obstacle.threat_level);
 
         // ignore any really old data:
@@ -517,10 +485,6 @@ void AP_Avoidance::update()
 {
     if (!check_startup()) {
         return;
-    }
-
-    if (_adsb.enabled()) {
-        get_adsb_samples();
     }
 
     check_for_threats();
@@ -581,7 +545,7 @@ void AP_Avoidance::handle_msg(const mavlink_message_t &msg)
         return;
     }
 
-    if (msg.msgid != MAVLINK_MSG_ID_GLOBAL_POSITION_INT) {
+    if (msg.msgid != MAVLINK_MSG_ID_LOCAL_POSITION_NED) {
         // we only take position from GLOBAL_POSITION_INT
         return;
     }
@@ -592,42 +556,66 @@ void AP_Avoidance::handle_msg(const mavlink_message_t &msg)
     }
 
     // inform AP_Avoidance we have a new player
-    mavlink_global_position_int_t packet;
-    mavlink_msg_global_position_int_decode(&msg, &packet);
-    const Location loc {
-        packet.lat,
-        packet.lon,
-        int32_t(packet.alt * 0.1),  // mm -> cm
-        Location::AltFrame::ABSOLUTE
-    };
-    const Vector3f vel {
-        packet.vx * 0.01f, // cm to m
-        packet.vy * 0.01f,
-        packet.vz * 0.01f
-    };
+    mavlink_local_position_ned_t packet;
+    mavlink_msg_local_position_ned_decode(&msg, &packet);
     add_obstacle(AP_HAL::millis(),
                  MAV_COLLISION_SRC_MAVLINK_GPS_GLOBAL_INT,
                  msg.sysid,
-                 loc,
-                 vel);
+                 Vector3f(packet.x, packet.y, packet.z),
+                 Vector3f(packet.vx, packet.vy, packet.vz));
     struct log_ADSB pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ADSB_MSG),
         time_us       : AP_HAL::micros64(),
-        ICAO_address  : 0,
-        lat           : packet.lat,
-        lng           : packet.lon,
-        alt           : packet.alt,
-        heading       : packet.hdg,
-        hor_velocity  : (uint16_t)sqrtf(packet.vx*packet.vx+packet.vy*packet.vy),
-        ver_velocity  : (int16_t)(-packet.vz),
-        squawk        : 0,
+        src_id: msg.sysid,
+        x: packet.x,
+        y: packet.y,
+        z: packet.z,
+        vx: packet.vx,
+        vy: packet.vy,
+        vz: packet.vz
     };
     AP::logger().WriteBlock(&pkt, sizeof(pkt));
+}
+
+bool AP_Avoidance::get_vector_perpendicular_2d(const AP_Avoidance::Obstacle *obstacle, Vector2f &vec_ne) const
+{
+    if (obstacle == nullptr) {
+        // why where we called?!
+        return false;
+    }
+
+    Vector2f my_pos;
+    if (!AP::ahrs().get_relative_position_NE_origin(my_pos)) {
+        return false;
+    }
+
+    // if their velocity is moving around close to zero then flying
+    // perpendicular to that velocity may mean we do weird things.
+    // Instead, we will fly directly away from them
+    if (obstacle->_velocity.length() < _low_velocity_threshold) {
+        vec_ne.x =  my_pos.x - obstacle->_pos_ned.x;
+        vec_ne.y =  my_pos.y - obstacle->_pos_ned.y;
+        // avoid div by zero
+        if (vec_ne.is_zero()) {
+            return false;
+        }
+        vec_ne.normalize();
+        return true;
+    } else {
+        vec_ne = Vector2f::perpendicular(my_pos - obstacle->_pos_ned.xy(), obstacle->_velocity.xy());
+        // avoid div by zero
+        if (vec_ne.is_zero()) {
+            return false;
+        }
+        vec_ne.normalize();
+        return true;
+    }
 }
 
 // get unit vector away from the nearest obstacle
 bool AP_Avoidance::get_vector_perpendicular(const AP_Avoidance::Obstacle *obstacle, Vector3f &vec_neu) const
 {
+#if 0
     if (obstacle == nullptr) {
         // why where we called?!
         return false;
@@ -663,10 +651,13 @@ bool AP_Avoidance::get_vector_perpendicular(const AP_Avoidance::Obstacle *obstac
         vec_neu.normalize();
         return true;
     }
+#endif
+    return false;
 }
 
 // helper functions to calculate 3D destination to get us away from obstacle
 // v1 is NED
+#if 0
 Vector3f AP_Avoidance::perpendicular_xyz(const Location &p1, const Vector3f &v1, const Location &p2)
 {
     const Vector2f delta_p_2d = p1.get_distance_NE(p2);
@@ -678,7 +669,7 @@ Vector3f AP_Avoidance::perpendicular_xyz(const Location &p1, const Vector3f &v1,
 
 // helper functions to calculate horizontal destination to get us away from obstacle
 // v1 is NED
-Vector2f AP_Avoidance::perpendicular_xy(const Location &p1, const Vector3f &v1, const Location &p2)
+Vector2f AP_Avoidance::perpendicular_xy(const Vector2f &p1, const Vector2f &v1, const Vector2f &p2)
 {
     const Vector2f delta_p = p1.get_distance_NE(p2);
     Vector2f delta_p_n = Vector2f(delta_p[0],delta_p[1]);
@@ -686,7 +677,7 @@ Vector2f AP_Avoidance::perpendicular_xy(const Location &p1, const Vector3f &v1, 
     Vector2f ret_xy = Vector2f::perpendicular(delta_p_n, v1n);
     return ret_xy;
 }
-
+#endif
 
 // singleton instance
 AP_Avoidance *AP_Avoidance::_singleton;

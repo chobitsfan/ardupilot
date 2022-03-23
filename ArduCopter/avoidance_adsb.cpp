@@ -178,9 +178,9 @@ bool AP_Avoidance_Copter::handle_avoidance_vertical(const AP_Avoidance::Obstacle
 
     // decide on whether we should climb or descend
     bool should_climb = false;
-    Location my_loc;
-    if (AP::ahrs().get_location(my_loc)) {
-        should_climb = my_loc.alt > obstacle->_location.alt;
+    float posD;
+    if (AP::ahrs().get_relative_position_D_origin(posD)) {
+        should_climb = posD < obstacle->_pos_ned.z;
     }
 
     // get best vector away from obstacle
@@ -208,21 +208,11 @@ bool AP_Avoidance_Copter::handle_avoidance_horizontal(const AP_Avoidance::Obstac
     }
 
     // get best vector away from obstacle
-    Vector3f velocity_neu;
-    if (get_vector_perpendicular(obstacle, velocity_neu)) {
-        // remove vertical component
-        velocity_neu.z = 0.0f;
-        // check for divide by zero
-        if (is_zero(velocity_neu.x) && is_zero(velocity_neu.y)) {
-            return false;
-        }
-        // re-normalise
-        velocity_neu.normalize();
-        // convert horizontal components to velocities
-        velocity_neu.x *= copter.wp_nav->get_default_speed_xy();
-        velocity_neu.y *= copter.wp_nav->get_default_speed_xy();
+    Vector2f velocity_ne;
+    if (get_vector_perpendicular_2d(obstacle, velocity_ne)) {
+        velocity_ne *= copter.wp_nav->get_default_speed_xy();
         // send target velocity
-        copter.mode_avoid_adsb.set_velocity(velocity_neu);
+        copter.mode_avoid_adsb.set_velocity(Vector3f(velocity_ne, 0));
         return true;
     }
 

@@ -833,19 +833,6 @@ void AP_ADSB::write_log(const adsb_vehicle_t &vehicle) const
             return;
     }
 
-    struct log_ADSB pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_ADSB_MSG),
-        time_us       : AP_HAL::micros64(),
-        ICAO_address  : vehicle.info.ICAO_address,
-        lat           : vehicle.info.lat,
-        lng           : vehicle.info.lon,
-        alt           : vehicle.info.altitude,
-        heading       : vehicle.info.heading,
-        hor_velocity  : vehicle.info.hor_velocity,
-        ver_velocity  : vehicle.info.ver_velocity,
-        squawk        : vehicle.info.squawk,
-    };
-    AP::logger().WriteBlock(&pkt, sizeof(pkt));
 }
 
 AP_ADSB *AP::ADSB()

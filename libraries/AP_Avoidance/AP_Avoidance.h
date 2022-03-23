@@ -63,7 +63,7 @@ public:
         uint32_t src_id;
         uint32_t timestamp_ms;
 
-        Location _location;
+        Vector3f _pos_ned;
         Vector3f _velocity;
 
         // fields relating to this being a threat.  These would be the reason to have a separate list of threats:
@@ -80,16 +80,10 @@ public:
     void add_obstacle(uint32_t obstacle_timestamp_ms,
                       const MAV_COLLISION_SRC src,
                       uint32_t src_id,
-                      const Location &loc,
+                      const Vector3f &pos_ned,
                       const Vector3f &vel_ned);
 
-    void add_obstacle(uint32_t obstacle_timestamp_ms,
-                      const MAV_COLLISION_SRC src,
-                      uint32_t src_id,
-                      const Location &loc,
-                      float cog,
-                      float hspeed,
-                      float vspeed);
+
 
     // update should be called at 10hz or higher
     void update();
@@ -141,11 +135,12 @@ protected:
 
     // get unit vector away from the nearest obstacle
     bool get_vector_perpendicular(const AP_Avoidance::Obstacle *obstacle, Vector3f &vec_neu) const;
+    bool get_vector_perpendicular_2d(const AP_Avoidance::Obstacle *obstacle, Vector2f &vec_ne) const;
 
     // helper functions to calculate destination to get us away from obstacle
     // Note: v1 is NED
-    static Vector3f perpendicular_xyz(const Location &p1, const Vector3f &v1, const Location &p2);
-    static Vector2f perpendicular_xy(const Location &p1, const Vector3f &v1, const Location &p2);
+    //static Vector3f perpendicular_xyz(const Vector3f &p1, const Vector3f &v1, const Vector3f &p2);
+    //static Vector2f perpendicular_xy(const Vector2f &p1, const Vector2f &v1, const Vector2f &p2);
 
 private:
 
@@ -172,12 +167,11 @@ private:
     uint32_t src_id_for_adsb_vehicle(const AP_ADSB::adsb_vehicle_t &vehicle) const;
 
     void check_for_threats();
-    void update_threat_level(const Location &my_loc,
+    void update_threat_level(const Vector3f &my_pos,
                              const Vector3f &my_vel,
                              AP_Avoidance::Obstacle &obstacle);
 
-    // calls into the AP_ADSB library to retrieve vehicle data
-    void get_adsb_samples();
+
 
     // returns true if the obstacle should be considered more of a
     // threat than the current most serious threat
@@ -215,15 +209,15 @@ private:
     static AP_Avoidance *_singleton;
 };
 
-float closest_approach_xy(const Location &my_loc,
+float closest_approach_xy(const Vector3f &my_pos,
                           const Vector3f &my_vel,
-                          const Location &obstacle_loc,
+                          const Vector3f &obstacle_pos,
                           const Vector3f &obstacle_vel,
                           uint8_t time_horizon);
 
-float closest_approach_z(const Location &my_loc,
+float closest_approach_z(const Vector3f &my_pos,
                          const Vector3f &my_vel,
-                         const Location &obstacle_loc,
+                         const Vector3f &obstacle_pos,
                          const Vector3f &obstacle_vel,
                          uint8_t time_horizon);
 
