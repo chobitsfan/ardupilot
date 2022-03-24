@@ -573,10 +573,8 @@ void GCS_MAVLINK_Copter::packetReceived(const mavlink_status_t &status,
                                         const mavlink_message_t &msg)
 {
 #if HAL_ADSB_ENABLED
-    if (copter.g2.dev_options.get() & DevOptionADSBMAVLink) {
-        // optional handling of GLOBAL_POSITION_INT as a MAVLink based avoidance source
-        copter.avoidance_adsb.handle_msg(msg);
-    }
+    // optional handling of GLOBAL_POSITION_INT as a MAVLink based avoidance source
+    copter.avoidance_adsb.handle_msg(msg);
 #endif
 #if MODE_FOLLOW_ENABLED == ENABLED
     // pass message to follow library
