@@ -46,9 +46,14 @@ void AC_PrecLand_Companion::handle_msg(const mavlink_landing_target_t &packet, u
 {
     _distance_to_target = packet.distance;
 
-    // compute unit vector towards target
-    _los_meas_body = Vector3f(-tanf(packet.angle_y), tanf(packet.angle_x), 1.0f);
-    _los_meas_body /= _los_meas_body.length();
+    if (packet.position_valid == 1) {
+        _los_meas_body = Vector3f(packet.x, packet.y, packet.z);
+        _los_meas_body /= _distance_to_target;
+    } else {
+        // compute unit vector towards target
+        _los_meas_body = Vector3f(-tanf(packet.angle_y), tanf(packet.angle_x), 1.0f);
+        _los_meas_body /= _los_meas_body.length();
+    }
 
     _los_meas_time_ms = timestamp_ms;
     _have_los_meas = true;
