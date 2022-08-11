@@ -60,6 +60,8 @@ public:
     // give chance to driver to get updates from sensor, should be called at 400hz
     void update(float rangefinder_alt_cm, bool rangefinder_alt_valid);
 
+    float get_target_distance_m();
+
     // returns target position relative to the EKF origin
     bool get_target_position_cm(Vector2f& ret);
 
