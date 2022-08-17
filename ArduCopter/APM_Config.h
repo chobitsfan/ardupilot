@@ -23,7 +23,7 @@
 #define GRIPPER_ENABLED       DISABLED            // disable gripper support
 #define RPM_ENABLED           DISABLED            // disable rotations per minute sensor support
 #define STATS_ENABLED         DISABLED            // disable statistics support
-//#define MODE_ACRO_ENABLED     DISABLED            // disable acrobatic mode support
+#define MODE_ACRO_ENABLED     DISABLED            // disable acrobatic mode support
 //#define MODE_AUTO_ENABLED     DISABLED            // disable auto mode support
 //#define MODE_BRAKE_ENABLED    DISABLED            // disable brake mode support
 //#define MODE_CIRCLE_ENABLED   DISABLED            // disable circle mode support
