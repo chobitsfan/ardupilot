@@ -215,6 +215,7 @@ private:
     // backend state
     struct precland_state {
         bool    healthy;
+        uint8_t tag_id;
     } _backend_state;
     AC_PrecLand_Backend         *_backend;  // pointers to backend precision landing driver
 
