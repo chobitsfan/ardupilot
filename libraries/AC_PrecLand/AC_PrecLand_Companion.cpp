@@ -1,5 +1,6 @@
 #include <AP_HAL/AP_HAL.h>
 #include <GCS_MAVLink/GCS.h>
+#include <AP_AHRS/AP_AHRS.h>
 #include "AC_PrecLand_Companion.h"
 
 // perform any required initialisation of backend
@@ -52,6 +53,15 @@ void AC_PrecLand_Companion::handle_msg(const mavlink_landing_target_t &packet, u
             if (_distance_to_target > 0) {
                 _los_meas_body = Vector3f(packet.x, packet.y, packet.z);
                 _los_meas_body /= _distance_to_target;
+            } else {
+                // distance to target must be positive
+                return;
+            }
+        } else if (packet.frame == MAV_FRAME_LOCAL_OFFSET_NED) {
+            if (_distance_to_target > 0) {
+                _los_meas_body = Vector3f(packet.x, packet.y, packet.z);
+                _los_meas_body /= _distance_to_target;
+                _los_meas_body.rotate_xy(AP::ahrs().yaw);
             } else {
                 // distance to target must be positive
                 return;
