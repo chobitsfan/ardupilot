@@ -1,6 +1,6 @@
 #include "AP_Avoidance.h"
 
-#if HAL_ADSB_ENABLED
+#if 1
 
 extern const AP_HAL::HAL& hal;
 
@@ -127,8 +127,7 @@ const AP_Param::GroupInfo AP_Avoidance::var_info[] = {
     AP_GROUPEND
 };
 
-AP_Avoidance::AP_Avoidance(AP_ADSB &adsb) :
-    _adsb(adsb)
+AP_Avoidance::AP_Avoidance()
 {
     AP_Param::setup_object_defaults(this, var_info);
     if (_singleton != nullptr) {
@@ -239,12 +238,6 @@ void AP_Avoidance::add_obstacle(const uint32_t obstacle_timestamp_ms,
     _obstacles[index]._pos_ned = pos_ned;
     _obstacles[index]._velocity = vel_ned;
     _obstacles[index].timestamp_ms = obstacle_timestamp_ms;
-}
-
-uint32_t AP_Avoidance::src_id_for_adsb_vehicle(const AP_ADSB::adsb_vehicle_t &vehicle) const
-{
-    // TODO: need to include squawk code and callsign
-    return vehicle.info.ICAO_address;
 }
 
 float closest_approach_xy(const Vector3f &my_pos,

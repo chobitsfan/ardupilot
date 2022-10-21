@@ -25,9 +25,12 @@
   based on AP_ADSB,  Tom Pittenger, November 2015
 */
 
-#include <AP_ADSB/AP_ADSB.h>
+#include <AP_Common/AP_Common.h>
+#include <AP_Param/AP_Param.h>
+#include <AP_Common/Location.h>
+#include <GCS_MAVLink/GCS_MAVLink.h>
 
-#if HAL_ADSB_ENABLED
+#if 1
 
 #define AP_AVOIDANCE_STATE_RECOVERY_TIME_MS                 2000    // we will not downgrade state any faster than this (2 seconds)
 
@@ -37,7 +40,7 @@ class AP_Avoidance {
 public:
 
     // constructor
-    AP_Avoidance(class AP_ADSB &adsb);
+    AP_Avoidance();
 
     /* Do not allow copies */
     AP_Avoidance(const AP_Avoidance &other) = delete;
@@ -108,11 +111,11 @@ protected:
 
     // avoid the most significant threat.  child classes must override this method
     // function returns the action that it is actually taking
-    virtual MAV_COLLISION_ACTION handle_avoidance(const AP_Avoidance::Obstacle *obstacle, MAV_COLLISION_ACTION requested_action) = 0;
+    virtual MAV_COLLISION_ACTION handle_avoidance(const AP_Avoidance::Obstacle *obstacle, MAV_COLLISION_ACTION requested_action) {return MAV_COLLISION_ACTION_NONE;};
 
     // recover after all threats have cleared.  child classes must override this method
     // recovery_action is from F_RCVRY parameter
-    virtual void handle_recovery(RecoveryAction recovery_action) = 0;
+    virtual void handle_recovery(RecoveryAction recovery_action) {};
 
     uint32_t _last_state_change_ms = 0;
     MAV_COLLISION_THREAT_LEVEL _threat_level = MAV_COLLISION_THREAT_LEVEL_NONE;
@@ -163,9 +166,6 @@ private:
     // free _obstacle_list
     void deinit();
 
-    // get unique id for adsb
-    uint32_t src_id_for_adsb_vehicle(const AP_ADSB::adsb_vehicle_t &vehicle) const;
-
     void check_for_threats();
     void update_threat_level(const Vector3f &my_pos,
                              const Vector3f &my_vel,
@@ -183,9 +183,6 @@ private:
     uint8_t _obstacle_count;
     int8_t _current_most_serious_threat;
     MAV_COLLISION_ACTION _latest_action = MAV_COLLISION_ACTION_NONE;
-
-    // external references
-    class AP_ADSB &_adsb;
 
     // parameters
     AP_Int8     _enabled;

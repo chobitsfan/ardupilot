@@ -68,6 +68,7 @@
 #include <AC_Sprayer/AC_Sprayer.h>          // Crop sprayer library
 #include <AP_ADSB/AP_ADSB.h>                // ADS-B RF based collision avoidance module library
 #include <AP_Proximity/AP_Proximity.h>      // ArduPilot proximity sensor library
+#include <AP_Avoidance/AP_Avoidance.h>
 
 // Configuration
 #include "defines.h"
@@ -529,10 +530,9 @@ private:
 
 #if HAL_ADSB_ENABLED
     AP_ADSB adsb;
-
-    // avoidance of adsb enabled vehicles (normally manned vehicles)
-    AP_Avoidance_Copter avoidance_adsb{adsb};
 #endif
+    // avoidance of adsb enabled vehicles (normally manned vehicles)
+    AP_Avoidance my_avoidance;
 
     // last valid RC input time
     uint32_t last_radio_update_ms;
