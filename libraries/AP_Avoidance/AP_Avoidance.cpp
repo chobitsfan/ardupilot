@@ -414,7 +414,7 @@ bool AP_Avoidance::obstacle_is_more_serious_threat(const AP_Avoidance::Obstacle 
     return false;
 }
 
-void AP_Avoidance::check_for_threats()
+void AP_Avoidance::check_for_threats(float target_pitch, float target_roll)
 {
     const AP_AHRS &_ahrs = AP::ahrs();
 
@@ -430,6 +430,15 @@ void AP_Avoidance::check_for_threats()
         // fly into something.  Better not to attempt to avoid in this
         // case.
         return;
+    }
+
+    if (my_vel.x * my_vel.x + my_vel.y * my_vel.y < 0.09f) {
+        float fwd = -target_pitch;
+        float right = target_roll;
+        my_vel.x = fwd*_ahrs.cos_yaw()-right*_ahrs.sin_yaw();
+        my_vel.y = fwd*_ahrs.sin_yaw()+right*_ahrs.cos_yaw();
+        my_vel.z = 0;
+        my_vel.normalize();
     }
 
     // we always check all obstacles to see if they are threats since it
@@ -474,16 +483,16 @@ AP_Avoidance::Obstacle *AP_Avoidance::most_serious_threat()
 }
 
 
-void AP_Avoidance::update()
+void AP_Avoidance::update(float target_pitch, float target_roll)
 {
     if (!check_startup()) {
         return;
     }
 
-    check_for_threats();
+    check_for_threats(target_pitch, target_roll);
 
     // avoid object (if necessary)
-    handle_avoidance_local(most_serious_threat());
+    //handle_avoidance_local(most_serious_threat());
 
     // notify GCS of most serious thread
     handle_threat_gcs_notify(most_serious_threat());

@@ -283,6 +283,11 @@ void ModePosHold::run()
             target_pitch = 0;
             target_roll = 0;
             fence_braking = true;
+        } else {
+            copter.my_avoidance.update(target_pitch, target_roll);
+            if (copter.my_avoidance.current_threat_level() == MAV_COLLISION_THREAT_LEVEL_HIGH) {
+                fence_braking = true;
+            }
         }
 
         break;
