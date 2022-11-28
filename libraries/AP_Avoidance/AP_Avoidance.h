@@ -89,7 +89,7 @@ public:
 
 
     // update should be called at 10hz or higher
-    void update(float target_pitch, float target_roll);
+    void update(float target_pitch, float target_roll, bool speed_very_slow, float vel_x_cms, float vel_y_cms);
 
     // enable or disable avoidance
     void enable() { _enabled = true; };
@@ -166,7 +166,7 @@ private:
     // free _obstacle_list
     void deinit();
 
-    void check_for_threats(float target_pitch, float target_roll);
+    void check_for_threats(float target_pitch, float target_roll, bool speed_very_slow, float vel_x_cms, float vel_y_cms);
     void update_threat_level(const Vector3f &my_pos,
                              const Vector3f &my_vel,
                              AP_Avoidance::Obstacle &obstacle);

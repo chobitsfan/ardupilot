@@ -1167,7 +1167,7 @@ protected:
 private:
 
     float get_fence_adjusted_climbrate(float target_rate);
-    bool brake_at_fence(float pitch, float roll);
+    bool brake_at_fence(float pitch, float roll, bool speed_very_slow, float &vel_x_cms, float &vel_y_cms);
     void update_pilot_lean_angle(float &lean_angle_filtered, float &lean_angle_raw);
     float mix_controls(float mix_ratio, float first_control, float second_control);
     void update_brake_angle_from_velocity(float &brake_angle, float velocity);
@@ -1226,6 +1226,7 @@ private:
     float pitch;  // final pitch angle sent to attitude controller
 
     bool fence_braking;
+    uint32_t fence_braking_notify_ts;
 
 };
 

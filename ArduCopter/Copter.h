@@ -532,7 +532,7 @@ private:
     AP_ADSB adsb;
 #endif
     // avoidance of adsb enabled vehicles (normally manned vehicles)
-    AP_Avoidance my_avoidance;
+    AP_Avoidance avoidance_adsb;
 
     // last valid RC input time
     uint32_t last_radio_update_ms;

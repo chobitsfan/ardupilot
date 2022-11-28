@@ -64,24 +64,40 @@ bool ModePosHold::init(bool ignore_checks)
     return true;
 }
 
-bool ModePosHold::brake_at_fence(float target_pitch, float target_roll)
+bool ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool speed_very_slow, float &vel_x_cms, float &vel_y_cms)
 {
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
-        const Vector3f& vel = inertial_nav.get_velocity_neu_cms();
-        if (vel.x * vel.x + vel.y * vel.y > 900.0f) {
-            Vector2p pos_cm;
+        if (speed_very_slow) {
+            const Vector2f& pos_cm = inertial_nav.get_position_xy_cm();
+            float scale;
+            float pp = fabsf(target_pitch);
+            float rr = fabsf(target_roll);
+            if (pp > rr) scale = 50.0f / pp; else scale = 50.0f / rr;
+            float fwd = -target_pitch * scale;
+            float right = target_roll * scale;
+            vel_x_cms = fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw();
+            vel_y_cms = fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw();
+            bool breached = fence->polyfence().breached(Vector2f(pos_cm.x+vel_x_cms, pos_cm.y+vel_y_cms));
+            if (breached) {
+                uint32_t now = AP_HAL::millis();
+                if (now - fence_braking_notify_ts > 2000) {
+                    fence_braking_notify_ts = now;
+                    gcs().send_text(MAV_SEVERITY_INFO, "slow brake %f %f", pos_cm.y, vel_y_cms);
+                }
+            }
+            return breached;
+        } else {
+            Vector2f pos_cm;
             pos_control->get_stopping_point_xy_cm(pos_cm);
-            if (fence->polyfence().breached(pos_cm.tofloat())) {
+            if (fence->polyfence().breached(pos_cm)) {
+                uint32_t now = AP_HAL::millis();
+                if (now - fence_braking_notify_ts > 2000) {
+                    fence_braking_notify_ts = now;
+                    gcs().send_text(MAV_SEVERITY_INFO, "brake %f", pos_cm.y);
+                }
                 return true;
             }
-        } else {
-            const Vector3f& pos_cm = inertial_nav.get_position_neu_cm();
-            float fwd = -target_pitch;
-            float right = target_roll;
-            Vector2f ne(fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw(), fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw());
-            ne.normalize();
-            return fence->polyfence().breached(Vector2f(pos_cm.x+ne.x*50,pos_cm.y+ne.y*50));
         }
     }
     return false;
@@ -276,17 +292,21 @@ void ModePosHold::run()
         // Send the commanded climb rate to the position controller
         pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
 
-        if (fence_braking) {
-            target_pitch = 0;
-            target_roll = 0;
-        } else if (brake_at_fence(target_pitch, target_roll)) {
-            target_pitch = 0;
-            target_roll = 0;
-            fence_braking = true;
-        } else {
-            copter.my_avoidance.update(target_pitch, target_roll);
-            if (copter.my_avoidance.current_threat_level() == MAV_COLLISION_THREAT_LEVEL_HIGH) {
+        if (!is_zero(target_pitch) || !is_zero(target_roll)) {
+            bool speed_very_slow = (vel.x * vel.x + vel.y * vel.y * vel.y) < 900;
+            float vel_x_cms, vel_y_cms;
+            if (fence_braking) {
+                target_pitch = 0;
+                target_roll = 0;
+            } else if (brake_at_fence(target_pitch, target_roll, speed_very_slow || (roll_mode == RPMode::LOITER), vel_x_cms, vel_y_cms)) {
+                target_pitch = 0;
+                target_roll = 0;
                 fence_braking = true;
+            } else {
+                copter.avoidance_adsb.update(target_pitch, target_roll, speed_very_slow, vel_x_cms, vel_y_cms);
+                if (copter.avoidance_adsb.current_threat_level() == MAV_COLLISION_THREAT_LEVEL_HIGH) {
+                    fence_braking = true;
+                }
             }
         }
 
@@ -516,7 +536,6 @@ void ModePosHold::run()
         // handle combined roll+pitch mode
         switch (roll_mode) {
             case RPMode::BRAKE_TO_LOITER: {
-                fence_braking = false;
                 // reduce brake_to_loiter timer
                 if (brake.to_loiter_timer > 0) {
                     brake.to_loiter_timer--;

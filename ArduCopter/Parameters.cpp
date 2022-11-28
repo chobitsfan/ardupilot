@@ -717,11 +717,10 @@ const AP_Param::Info Copter::var_info[] = {
     // @Group: ADSB_
     // @Path: ../libraries/AP_ADSB/AP_ADSB.cpp
     GOBJECT(adsb,                "ADSB_", AP_ADSB),
-
+#endif
     // @Group: AVD_
     // @Path: ../libraries/AP_Avoidance/AP_Avoidance.cpp
-    GOBJECT(avoidance_adsb, "AVD_", AP_Avoidance_Copter),
-#endif
+    GOBJECT(avoidance_adsb, "AVD_", AP_Avoidance),
 
     // @Group: NTF_
     // @Path: ../libraries/AP_Notify/AP_Notify.cpp
