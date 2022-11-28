@@ -492,7 +492,7 @@ void AP_Avoidance::update(float target_pitch, float target_roll, bool speed_very
     //handle_avoidance_local(most_serious_threat());
 
     // notify GCS of most serious thread
-    //handle_threat_gcs_notify(most_serious_threat());
+    handle_threat_gcs_notify(most_serious_threat());
 }
 
 void AP_Avoidance::handle_avoidance_local(AP_Avoidance::Obstacle *threat)
@@ -559,7 +559,7 @@ void AP_Avoidance::handle_msg(const mavlink_message_t &msg)
     mavlink_msg_local_position_ned_decode(&msg, &packet);
     add_obstacle(AP_HAL::millis(),
                  MAV_COLLISION_SRC_MAVLINK_GPS_GLOBAL_INT,
-                 msg.sysid,
+                 packet.time_boot_ms, //I send local_position_ned with time_boot_ms = mavlink id
                  Vector3f(packet.x, packet.y, packet.z),
                  Vector3f(packet.vx, packet.vy, packet.vz));
     struct log_ADSB pkt = {

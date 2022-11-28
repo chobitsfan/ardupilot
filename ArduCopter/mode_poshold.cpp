@@ -73,7 +73,7 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool spe
             float scale;
             float pp = fabsf(target_pitch);
             float rr = fabsf(target_roll);
-            if (pp > rr) scale = 50.0f / pp; else scale = 50.0f / rr;
+            if (pp > rr) scale = 70.0f / pp; else scale = 70.0f / rr;
             float fwd = -target_pitch * scale;
             float right = target_roll * scale;
             vel_x_cms = fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw();
@@ -303,8 +303,10 @@ void ModePosHold::run()
                 target_roll = 0;
                 fence_braking = true;
             } else {
-                copter.avoidance_adsb.update(target_pitch, target_roll, speed_very_slow, vel_x_cms, vel_y_cms);
+                copter.avoidance_adsb.update(target_pitch, target_roll, speed_very_slow  || (roll_mode == RPMode::LOITER), vel_x_cms, vel_y_cms);
                 if (copter.avoidance_adsb.current_threat_level() == MAV_COLLISION_THREAT_LEVEL_HIGH) {
+                    target_pitch = 0;
+                    target_roll = 0;
                     fence_braking = true;
                 }
             }
