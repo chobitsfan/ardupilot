@@ -64,7 +64,7 @@ bool ModePosHold::init(bool ignore_checks)
     return true;
 }
 
-bool ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool speed_very_slow, float &vel_x_cms, float &vel_y_cms)
+int ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool speed_very_slow, float &vel_x_cms, float &vel_y_cms)
 {
     AC_Fence *fence = AP::fence();
     if (fence && fence->enabled()) {
@@ -78,15 +78,14 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool spe
             float right = target_roll * scale;
             vel_x_cms = fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw();
             vel_y_cms = fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw();
-            bool breached = fence->polyfence().breached(Vector2f(pos_cm.x+vel_x_cms, pos_cm.y+vel_y_cms));
-            if (breached) {
+            if (fence->polyfence().breached(Vector2f(pos_cm.x+vel_x_cms, pos_cm.y+vel_y_cms))) {
                 uint32_t now = AP_HAL::millis();
                 if (now - fence_braking_notify_ts > 2000) {
                     fence_braking_notify_ts = now;
-                    gcs().send_text(MAV_SEVERITY_INFO, "slow brake %f %f", pos_cm.y, vel_y_cms);
+                    gcs().send_text(MAV_SEVERITY_INFO, "slow brake %.1f %.1f", pos_cm.x+vel_x_cms, pos_cm.y+vel_y_cms);
                 }
+                return 2;
             }
-            return breached;
         } else {
             Vector2f pos_cm;
             pos_control->get_stopping_point_xy_cm(pos_cm);
@@ -94,13 +93,13 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool spe
                 uint32_t now = AP_HAL::millis();
                 if (now - fence_braking_notify_ts > 2000) {
                     fence_braking_notify_ts = now;
-                    gcs().send_text(MAV_SEVERITY_INFO, "brake %f", pos_cm.y);
+                    gcs().send_text(MAV_SEVERITY_INFO, "brake %.1f %.1f", pos_cm.x, pos_cm.y);
                 }
-                return true;
+                return 1;
             }
         }
     }
-    return false;
+    return 0;
 }
 
 float ModePosHold::get_fence_adjusted_climbrate(float target_rate) {
@@ -298,16 +297,22 @@ void ModePosHold::run()
             if (fence_braking) {
                 target_pitch = 0;
                 target_roll = 0;
-            } else if (brake_at_fence(target_pitch, target_roll, speed_very_slow || (roll_mode == RPMode::LOITER), vel_x_cms, vel_y_cms)) {
-                target_pitch = 0;
-                target_roll = 0;
-                fence_braking = true;
-            } else {
-                copter.avoidance_adsb.update(target_pitch, target_roll, speed_very_slow  || (roll_mode == RPMode::LOITER), vel_x_cms, vel_y_cms);
-                if (copter.avoidance_adsb.current_threat_level() == MAV_COLLISION_THREAT_LEVEL_HIGH) {
+            } else  {
+                int ret = brake_at_fence(target_pitch, target_roll, speed_very_slow || (roll_mode == RPMode::LOITER), vel_x_cms, vel_y_cms);
+                if (ret == 1) {
                     target_pitch = 0;
                     target_roll = 0;
                     fence_braking = true;
+                } else if (ret == 2) {
+                    target_pitch = -target_pitch;
+                    target_roll = -target_roll;
+                } else {
+                    copter.avoidance_adsb.update(target_pitch, target_roll, speed_very_slow  || (roll_mode == RPMode::LOITER), vel_x_cms, vel_y_cms);
+                    if (copter.avoidance_adsb.current_threat_level() == MAV_COLLISION_THREAT_LEVEL_HIGH) {
+                        target_pitch = 0;
+                        target_roll = 0;
+                        fence_braking = true;
+                    }
                 }
             }
         }
