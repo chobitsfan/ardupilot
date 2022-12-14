@@ -307,24 +307,14 @@ void AP_Avoidance::update_threat_level(const Vector3f &my_pos,
     float closest_xy = closest_approach_xy(my_pos, my_vel, obstacle_pos, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
     if (closest_xy < _fail_distance_xy) {
         obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_HIGH;
-    } else {
-        closest_xy = closest_approach_xy(my_pos, my_vel, obstacle_pos, obstacle_vel, _warn_time_horizon + obstacle_age/1000);
-        if (closest_xy < _warn_distance_xy) {
-            obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_LOW;
-        }
     }
 
     // check for vertical separation; our threat level is the minimum
     // of vertical and horizontal threat levels
-    float closest_z = closest_approach_z(my_pos, my_vel, obstacle_pos, obstacle_vel, _warn_time_horizon + obstacle_age/1000);
+    float closest_z = closest_approach_z(my_pos, my_vel, obstacle_pos, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
     if (obstacle.threat_level != MAV_COLLISION_THREAT_LEVEL_NONE) {
-        if (closest_z > _warn_distance_z) {
-            obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_NONE;
-        } else {
-            closest_z = closest_approach_z(my_pos, my_vel, obstacle_pos, obstacle_vel, _fail_time_horizon + obstacle_age/1000);
-            if (closest_z > _fail_distance_z) {
-                obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_LOW;
-            }
+        if (closest_z > _fail_distance_z) {
+            obstacle.threat_level = MAV_COLLISION_THREAT_LEVEL_LOW;
         }
     }
 
