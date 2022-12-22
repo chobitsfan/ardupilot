@@ -79,23 +79,23 @@ bool ModePosHold::brake_at_fence(float target_pitch, float target_roll, bool spe
             vel_x_cms = fwd*ahrs.cos_yaw()-right*ahrs.sin_yaw();
             vel_y_cms = fwd*ahrs.sin_yaw()+right*ahrs.cos_yaw();
             bool breached = fence->polyfence().breached(Vector2f(pos_cm.x+vel_x_cms, pos_cm.y+vel_y_cms));
-            if (breached) {
+            /*if (breached) {
                 uint32_t now = AP_HAL::millis();
                 if (now - fence_braking_notify_ts > 2000) {
                     fence_braking_notify_ts = now;
-                    gcs().send_text(MAV_SEVERITY_INFO, "slow brake %f %f", pos_cm.y, vel_y_cms);
+                    gcs().send_text(MAV_SEVERITY_INFO, "fence slow %.1f %.1f", pos_cm.x+vel_x_cms, pos_cm.y+vel_y_cms);
                 }
-            }
+            }*/
             return breached;
         } else {
             Vector2f pos_cm;
             pos_control->get_stopping_point_xy_cm(pos_cm);
             if (fence->polyfence().breached(pos_cm)) {
-                uint32_t now = AP_HAL::millis();
+                /*uint32_t now = AP_HAL::millis();
                 if (now - fence_braking_notify_ts > 2000) {
                     fence_braking_notify_ts = now;
-                    gcs().send_text(MAV_SEVERITY_INFO, "brake %f", pos_cm.y);
-                }
+                    gcs().send_text(MAV_SEVERITY_INFO, "fence %.1f %.1f", pos_cm.x, pos_cm.y);
+                }*/
                 return true;
             }
         }

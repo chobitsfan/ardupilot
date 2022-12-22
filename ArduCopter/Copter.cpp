@@ -581,12 +581,6 @@ void Copter::three_hz_loop()
     // check if we've lost terrain data
     failsafe_terrain_check();
 
-#if AC_FENCE == ENABLED
-    // check if we have breached a fence
-    fence_check();
-#endif // AC_FENCE_ENABLED
-
-
     // update ch6 in flight tuning
     tuning();
 
@@ -600,6 +594,11 @@ void Copter::one_hz_loop()
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(LogDataID::AP_STATE, ap.value);
     }
+
+#if AC_FENCE == ENABLED
+    // check if we have breached a fence
+    fence_check();
+#endif // AC_FENCE_ENABLED
 
     arming.update();
 

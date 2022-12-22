@@ -1226,7 +1226,7 @@ private:
     float pitch;  // final pitch angle sent to attitude controller
 
     bool fence_braking;
-    uint32_t fence_braking_notify_ts;
+    //uint32_t fence_braking_notify_ts;
 
 };
 

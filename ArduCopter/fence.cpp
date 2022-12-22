@@ -52,7 +52,9 @@ void Copter::fence_check()
                         break;
                     case AC_FENCE_ACTION_ALWAYS_LAND:
                         // if always land option mode is specified, land
-                        set_mode(Mode::Number::LAND, ModeReason::FENCE_BREACHED);
+                        if ((orig_breaches & AC_FENCE_TYPE_POLYGON) && (new_breaches & AC_FENCE_TYPE_POLYGON)) {
+                            set_mode(Mode::Number::LAND, ModeReason::FENCE_BREACHED);
+                        }
                         break;
                     case AC_FENCE_ACTION_SMART_RTL:
                         // Try SmartRTL, if that fails, RTL, if that fails Land
