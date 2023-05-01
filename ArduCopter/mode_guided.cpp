@@ -323,6 +323,12 @@ void ModeGuided::angle_control_start()
     auto_yaw.set_mode(AutoYaw::Mode::HOLD);
 }
 
+bool ModeGuided::set_nxt_dst(const Vector3f& destination) 
+{
+    wp_nav->set_wp_destination_next(destination);
+    return true;
+}
+
 // set_destination - sets guided mode's target destination
 // Returns true if the fence is enabled and guided waypoint is within the fence
 // else return false if the waypoint is outside the fence
