@@ -1226,6 +1226,7 @@ void GCS_MAVLINK_Copter::handleMessage(const mavlink_message_t &msg)
         bool yaw_ignore      = packet.type_mask & MAVLINK_SET_POS_TYPE_MASK_YAW_IGNORE;
         bool yaw_rate_ignore = packet.type_mask & MAVLINK_SET_POS_TYPE_MASK_YAW_RATE_IGNORE;
         bool force_set       = packet.type_mask & MAVLINK_SET_POS_TYPE_MASK_FORCE_SET;
+        bool nxt_dst = packet.type_mask & 4096;
 
         // Force inputs are not supported
         // Do not accept command if force_set is true and acc_ignore is false
@@ -1298,7 +1299,10 @@ void GCS_MAVLINK_Copter::handleMessage(const mavlink_message_t &msg)
         } else if (pos_ignore && vel_ignore && !acc_ignore) {
             copter.mode_guided.set_accel(accel_vector, !yaw_ignore, yaw_cd, !yaw_rate_ignore, yaw_rate_cds, yaw_relative);
         } else if (!pos_ignore && vel_ignore && acc_ignore) {
-            copter.mode_guided.set_destination(pos_vector, !yaw_ignore, yaw_cd, !yaw_rate_ignore, yaw_rate_cds, yaw_relative, false);
+            if (nxt_dst)
+                copter.mode_guided.set_nxt_dst(pos_vector);
+            else
+                copter.mode_guided.set_destination(pos_vector, !yaw_ignore, yaw_cd, !yaw_rate_ignore, yaw_rate_cds, yaw_relative, false);
         } else {
             // input is not valid so stop
             copter.mode_guided.init(true);
