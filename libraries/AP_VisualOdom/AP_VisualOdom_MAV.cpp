@@ -39,7 +39,10 @@ void AP_VisualOdom_MAV::handle_pose_estimate(uint64_t remote_time_us, uint32_t t
     // send attitude and position to EKF if quality OK
     bool consume = (_quality >= _frontend.get_quality_min());
     if (consume) {
-        AP::ahrs().writeExtNavData(pos, attitude, posErr, angErr, time_ms, _frontend.get_delay_ms(), get_reset_timestamp_ms(reset_counter));
+        if (quality > 0)
+            AP::ahrs().writeExtNavData(pos, attitude, posErr, angErr, time_ms, quality, get_reset_timestamp_ms(reset_counter));
+        else
+            AP::ahrs().writeExtNavData(pos, attitude, posErr, angErr, time_ms, _frontend.get_delay_ms(), get_reset_timestamp_ms(reset_counter));
     }
 
     // calculate euler orientation for logging
@@ -67,7 +70,10 @@ void AP_VisualOdom_MAV::handle_vision_speed_estimate(uint64_t remote_time_us, ui
     // send velocity to EKF if quality OK
     bool consume = (_quality >= _frontend.get_quality_min());
     if (consume) {
-        AP::ahrs().writeExtNavVelData(vel, _frontend.get_vel_noise(), time_ms, _frontend.get_delay_ms());
+        if (quality > 0)
+            AP::ahrs().writeExtNavVelData(vel, _frontend.get_vel_noise(), time_ms, quality);
+        else
+            AP::ahrs().writeExtNavVelData(vel, _frontend.get_vel_noise(), time_ms,  _frontend.get_delay_ms());
     }
 
     // record time for health monitoring
