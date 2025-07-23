@@ -1120,7 +1120,7 @@ void GCS_MAVLINK_Copter::handle_message_set_position_target_local_ned(const mavl
     float yaw_rate_rads = 0.0f;
     if (!yaw_ignore) {
         yaw_rad = packet.yaw;
-        yaw_relative = packet.coordinate_frame == MAV_FRAME_BODY_NED || packet.coordinate_frame == MAV_FRAME_BODY_OFFSET_NED;
+        yaw_relative = packet.coordinate_frame == MAV_FRAME_BODY_NED;
     }
     if (!yaw_rate_ignore) {
         yaw_rate_rads = packet.yaw_rate;
