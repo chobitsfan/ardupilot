@@ -430,6 +430,8 @@ public:
     // the pointer passed can be freed after return.
     void log_file_content(const char *name);
 
+    uint8_t latest_event_id = 0;
+    uint32_t latest_event_ms = 0;
 protected:
 
     const struct LogStructure *_structures;

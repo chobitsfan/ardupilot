@@ -2164,6 +2164,13 @@ bool GCS_MAVLINK::sending_mavlink1() const
     return ((_channel_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1) != 0);
 }
 
+void GCS_MAVLINK::send_event() const
+{
+    uint8_t args[40];
+    AP_Logger *logger = AP_Logger::get_singleton();
+    mavlink_msg_event_send(chan, 0, 0, logger->latest_event_id, logger->latest_event_ms, 0, 0, args);
+}
+
 #if AP_RC_CHANNEL_ENABLED
 /*
   send RC_CHANNELS messages

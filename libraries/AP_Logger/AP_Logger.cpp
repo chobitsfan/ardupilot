@@ -1519,6 +1519,9 @@ void AP_Logger::Write_Event(LogEvent id)
         id       : (uint8_t)id
     };
     WriteCriticalBlock(&pkt, sizeof(pkt));
+
+    latest_event_id = (uint8_t)id;
+    latest_event_ms = AP_HAL::millis();
 }
 
 // Write an error packet
