@@ -1015,9 +1015,6 @@ void NavEKF3::UpdateFilter(void)
         // inconsistent performance
         primary = user_primary;
     }
-
-    // align position of inactive sources to ahrs
-    sources.align_inactive_sources();
 }
 
 /*
