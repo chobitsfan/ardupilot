@@ -685,6 +685,32 @@ bool RC_Channel_Copter::do_aux_function(const AuxFuncTrigger &trigger)
         break;
 #endif  // AP_RC_TRANSMITTER_TUNING_ENABLED
 
+#if AP_AHRS_ENABLED
+    case AUX_FUNC::EKF_SOURCE_SET: {
+        AP_NavEKF_Source::SourceSetSelection source_set = AP_NavEKF_Source::SourceSetSelection::PRIMARY;
+        switch (ch_flag) {
+        case AuxSwitchPos::LOW:
+            // low switches to primary source
+            source_set = AP_NavEKF_Source::SourceSetSelection::PRIMARY;
+            break;
+        case AuxSwitchPos::MIDDLE:
+            // middle switches to secondary source
+            source_set = AP_NavEKF_Source::SourceSetSelection::SECONDARY;
+            break;
+        case AuxSwitchPos::HIGH:
+            // high switches to tertiary source
+            source_set = AP_NavEKF_Source::SourceSetSelection::TERTIARY;
+            break;
+        }
+        if (copter.flightmode->in_guided_mode()) {
+            copter.mode_guided.set_vel_accel_NED_m(Vector3f(), Vector3f());
+        }
+        AP::ahrs().set_posvelyaw_source_set(source_set);
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "My using EKF Source Set %u", uint8_t(source_set)+1);
+        break;
+    }
+#endif  // AP_AHRS_ENABLED
+
     default:
         return RC_Channel::do_aux_function(trigger);
     }
