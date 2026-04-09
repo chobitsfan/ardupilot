@@ -1203,6 +1203,7 @@ ap_message GCS_MAVLINK::mavlink_id_to_ap_message_id(const uint32_t mavlink_id) c
 #if AP_MAVLINK_MSG_FLIGHT_INFORMATION_ENABLED
         { MAVLINK_MSG_ID_FLIGHT_INFORMATION, MSG_FLIGHT_INFORMATION},
 #endif
+        { MAVLINK_MSG_ID_EVENT, MSG_EVENT},
     };
 
     for (uint8_t i=0; i<ARRAY_SIZE(map); i++) {
@@ -2265,6 +2266,15 @@ void GCS_MAVLINK::send_raw_imu()
         int16_t(ins.get_temperature(0)*100));
 #endif
 }
+
+#if HAL_LOGGING_ENABLED
+void GCS_MAVLINK::send_event()
+{
+    uint8_t args[40];
+    AP_Logger *logger = AP_Logger::get_singleton();
+    mavlink_msg_event_send(chan, 0, 0, logger->latest_event_id, logger->latest_event_ms, 0, 0, args);
+}
+#endif
 
 #if AP_MAVLINK_MSG_HIGHRES_IMU_ENABLED
 void GCS_MAVLINK::send_highres_imu()
@@ -6435,6 +6445,11 @@ bool GCS_MAVLINK::try_send_message(const enum ap_message id)
         CHECK_PAYLOAD_SIZE(HEARTBEAT);
         last_heartbeat_time = AP_HAL::millis();
         send_heartbeat();
+        break;
+
+    case MSG_EVENT:
+        CHECK_PAYLOAD_SIZE(EVENT);
+        send_event();
         break;
 
 #if AP_MAVLINK_MSG_HWSTATUS_ENABLED

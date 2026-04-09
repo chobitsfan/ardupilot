@@ -366,6 +366,9 @@ public:
         AP_Int16 max_log_files;
     } _params;
 
+    uint8_t latest_event_id = 0;
+    uint32_t latest_event_ms = 0;
+
     const struct LogStructure *structure(uint16_t num) const;
     const struct UnitStructure *unit(uint16_t num) const;
     const struct MultiplierStructure *multiplier(uint16_t num) const;
