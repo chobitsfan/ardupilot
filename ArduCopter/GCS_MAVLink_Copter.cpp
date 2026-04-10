@@ -611,7 +611,7 @@ MAV_RESULT GCS_MAVLINK_Copter::handle_command_mount(const mavlink_command_int_t 
 MAV_RESULT GCS_MAVLINK_Copter::handle_command_set_ekf_source_set(const mavlink_command_int_t &packet)
 {
     if (copter.flightmode->in_guided_mode()) {
-        copter.mode_guided.set_vel_accel_NED_m(Vector3f(), Vector3f());
+        copter.mode_guided.init(true);
     }
     return GCS_MAVLINK::handle_command_set_ekf_source_set(packet);
 }

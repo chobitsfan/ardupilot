@@ -703,7 +703,7 @@ bool RC_Channel_Copter::do_aux_function(const AuxFuncTrigger &trigger)
             break;
         }
         if (copter.flightmode->in_guided_mode()) {
-            copter.mode_guided.set_vel_accel_NED_m(Vector3f(), Vector3f());
+            copter.mode_guided.init(true);
         }
         AP::ahrs().set_posvelyaw_source_set(source_set);
         GCS_SEND_TEXT(MAV_SEVERITY_INFO, "My using EKF Source Set %u", uint8_t(source_set)+1);
