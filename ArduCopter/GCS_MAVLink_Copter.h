@@ -36,7 +36,6 @@ protected:
     MAV_RESULT handle_command_int_packet(const mavlink_command_int_t &packet, const mavlink_message_t &msg) override;
     MAV_RESULT handle_command_int_do_reposition(const mavlink_command_int_t &packet);
     MAV_RESULT handle_command_pause_continue(const mavlink_command_int_t &packet);
-    MAV_RESULT handle_command_set_ekf_source_set(const mavlink_command_int_t &packet) override;
 
     void handle_message_set_attitude_target(const mavlink_message_t &msg);
     void handle_message_set_position_target_global_int(const mavlink_message_t &msg);
