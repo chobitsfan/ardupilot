@@ -1010,7 +1010,8 @@ void GCS_MAVLINK_Copter::handle_message_set_position_target_local_ned(const mavl
     if (packet.coordinate_frame != MAV_FRAME_LOCAL_NED &&
         packet.coordinate_frame != MAV_FRAME_LOCAL_OFFSET_NED &&
         packet.coordinate_frame != MAV_FRAME_BODY_NED &&
-        packet.coordinate_frame != MAV_FRAME_BODY_OFFSET_NED) {
+        packet.coordinate_frame != MAV_FRAME_BODY_OFFSET_NED &&
+        packet.coordinate_frame != MAV_FRAME_BODY_FRD) {
         // unsupported coordinate frame
         copter.mode_guided.hold_position();
         return;
@@ -1066,6 +1067,8 @@ void GCS_MAVLINK_Copter::handle_message_set_position_target_local_ned(const mavl
         // rotate to body-frame if necessary
         if (packet.coordinate_frame == MAV_FRAME_BODY_NED || packet.coordinate_frame == MAV_FRAME_BODY_OFFSET_NED) {
             vel_ned_ms.xy() = copter.ahrs.body_to_earth2D(vel_ned_ms.xy());
+        } else if (packet.coordinate_frame == MAV_FRAME_BODY_FRD) {
+            vel_ned_ms = copter.ahrs.body_to_earth(vel_ned_ms);
         }
     }
 
