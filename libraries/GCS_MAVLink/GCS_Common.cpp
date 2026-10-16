@@ -2270,7 +2270,7 @@ void GCS_MAVLINK::send_raw_imu()
 #if HAL_LOGGING_ENABLED
 void GCS_MAVLINK::send_event()
 {
-    uint8_t args[40];
+    uint8_t args[40] = {0};
     AP_Logger *logger = AP_Logger::get_singleton();
     mavlink_msg_event_send(chan, 0, 0, logger->latest_event_id, logger->latest_event_ms, 0, 0, args);
 }
